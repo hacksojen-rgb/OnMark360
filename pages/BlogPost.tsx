@@ -8,7 +8,7 @@ const BlogPost: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`https://agency.পাতা.বাংলা/api/get-blog-details.php?slug=${slug}`)
+    fetch(`https://onmark360.com/api/get-blog-details.php?slug=${slug}`)
       .then(res => res.json())
       .then(data => {
         setPost(data);
@@ -20,7 +20,7 @@ const BlogPost: React.FC = () => {
   if (loading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin text-[#014034]" size={48} /></div>;
   if (!post) return <div className="h-screen flex flex-col items-center justify-center"><h2>Post Not Found</h2><Link to="/blog">Back to Blog</Link></div>;
 
-  const imageUrl = post.image_url.startsWith('http') ? post.image_url : `https://agency.পাতা.বাংলা/${post.image_url}`;
+  const imageUrl = post.image_url.startsWith('http') ? post.image_url : `https://onmark360.com/${post.image_url}`;
 
   return (
     <div className="pt-32 pb-24 bg-white min-h-screen">

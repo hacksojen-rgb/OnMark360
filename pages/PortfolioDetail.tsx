@@ -36,7 +36,7 @@ const PortfolioDetail: React.FC = () => {
   // ইমেজ ইউআরএল হ্যান্ডলিং (লিংক নাকি আপলোড করা ফাইল)
   const imageUrl = project.image_url && project.image_url.startsWith('http') 
     ? project.image_url 
-    : `https://agency.পাতা.বাংলা/${project.image_url}`;
+    : `https://onmark360.com/${project.image_url}`;
 
   return (
     <div className="pt-32 pb-24 bg-white">

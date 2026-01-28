@@ -7,7 +7,7 @@ const Blog: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('https://agency.পাতা.বাংলা/api/get-blogs.php')
+    fetch('https://onmark360.com/api/get-blogs.php')
       .then(res => res.json())
       .then(data => {
         setPosts(Array.isArray(data) ? data : []);
@@ -29,7 +29,7 @@ const Blog: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
           {posts.length > 0 ? posts.map((post) => {
             // ইমেজ যদি লিংক হয় তবে সরাসরি নেবে, নাহলে ডোমেইন পাথ যোগ করবে
-            const imageUrl = post.image_url.startsWith('http') ? post.image_url : `https://agency.পাতা.বাংলা/${post.image_url}`;
+            const imageUrl = post.image_url.startsWith('http') ? post.image_url : `https://onmark360.com/${post.image_url}`;
             
             return (
               <article key={post.id} className="bg-white rounded-[2.5rem] overflow-hidden border border-gray-100 shadow-sm hover:shadow-2xl transition-all flex flex-col group">

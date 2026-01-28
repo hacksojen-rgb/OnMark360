@@ -19,7 +19,7 @@ export const SITE_SETTINGS: SiteSettings = {
   instagram: '#',
   linkedin: '#',
   aboutTitle: 'Fueling Growth for Tomorrow\'s Leaders',
-  aboutText: 'Founded in 2018, Build to Grow started with a simple vision: to bridge the gap between complex technology and business success.'
+  aboutText: 'Founded in 2018, OnMark360 started with a simple vision: to bridge the gap between complex technology and business success.'
 };
 
 export const INITIAL_HERO_SLIDES: HeroSlide[] = [

@@ -6,8 +6,8 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   
   // আপনার লোকাল PHP সার্ভারের ঠিকানা (যেখানে admin ফোল্ডারটি আছে)
-  // XAMPP ব্যবহার করলে সাধারণত এমন হয়: 'http://localhost/agency/admin'
-  const localPhpServer = 'http://localhost/agency_backend_folder'; 
+  // XAMPP ব্যবহার করলে সাধারণত এমন হয়: 'http://localhost/on_mark/admin'
+  const localPhpServer = 'http://localhost/on_mark_folder'; 
 
   return {
     // এই লাইনটিই আসল ম্যাজিক। এটি থাকলে index.html এডিট করা লাগবে না।

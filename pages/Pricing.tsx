@@ -49,7 +49,7 @@ const Pricing: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('https://agency.পাতা.বাংলা/api/get-pricing-plans.php')
+    fetch('https://onmark360.com/api/get-pricing-plans.php')
       .then(res => res.json())
       .then(data => {
         setPlans(data);

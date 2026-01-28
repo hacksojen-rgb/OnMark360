@@ -10,7 +10,7 @@ const Contact: React.FC = () => {
   const [pageContent, setPageContent] = useState({
     title: "Let's Talk",
     subtitle: "Question or project? We're here to help you grow.",
-    email: SITE_SETTINGS.email || "hello@buildtogrow.com",
+    email: SITE_SETTINGS.email || "hello@OnMark360.com",
     phone: SITE_SETTINGS.phone || "+1 (555) 000-0000",
     address: SITE_SETTINGS.address || "Quarter office indo pacific"
   });

@@ -35,7 +35,7 @@ const DynamicPage: React.FC = () => {
   return (
     <div className="pt-32 pb-24 bg-white min-h-screen">
       <Helmet>
-        <title>{pageData.title} | Build to Grow</title>
+        <title>{pageData.title} | On Mark</title>
       </Helmet>
       
       <div className="container mx-auto px-6 max-w-4xl">

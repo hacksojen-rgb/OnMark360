@@ -19,7 +19,7 @@ function icon_color($page, $current) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Console | Build to Grow</title>
+    <title>Console | OnMark360</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -142,7 +142,7 @@ function icon_color($page, $current) {
     <main class="ml-72 flex-grow min-h-screen">
 
         <header class="bg-white border-b border-gray-200 py-4 px-8 sticky top-0 z-40 flex justify-between items-center">
-            <h2 class="text-lg font-bold uppercase tracking-tight">Build to Grow Console</h2>
+            <h2 class="text-lg font-bold uppercase tracking-tight">OnMark360 Console</h2>
             <div class="flex items-center gap-4">
                 <div class="text-right hidden md:block">
                     <p class="text-sm font-bold"><?= $_SESSION['btg_admin_user']; ?></p>

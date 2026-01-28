@@ -3,4 +3,4 @@ Allow: /
 Disallow: /api/
 Disallow: /admin/
 
-Sitemap: https://agency.xn--45bl4db.xn--54b7fta0cc/sitemap.xml
+Sitemap: https://onmark360.com/sitemap.xml

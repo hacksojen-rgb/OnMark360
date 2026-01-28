@@ -79,7 +79,7 @@ const Home: React.FC = () => {
   const [ctaSettings, setCtaSettings] = useState<any>({ title: "Ready to Grow Your Business?", subtitle: "" });
   const [advSettings, setAdvSettings] = useState<any>({
     title: "Strategy-First Execution",
-    subtitle: "The Build to Grow Advantage",
+    subtitle: "Advantage of On Mark",
     image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=1470",
     stat_num: "140%",
     stat_text: "Average Growth Increase",

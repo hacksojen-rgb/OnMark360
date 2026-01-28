@@ -8,8 +8,8 @@ const GlobalSEO: React.FC = () => {
   const path = location.pathname;
 
   const customTitles: Record<string, string> = {
-    '/': 'Home | Build to Grow - Global Digital Agency',
-    '/get-quote': 'Get a Free Quote | Build to Grow',
+    '/': 'Home | On Mark - Global Digital Agency',
+    '/get-quote': 'Get a Free Quote | On Mark',
     '/contact': 'Contact Us | Start Your Project',
   };
 
@@ -19,7 +19,7 @@ const GlobalSEO: React.FC = () => {
   } else {
     const pageName = path.substring(1).replace(/-/g, ' ');
     const formattedName = pageName.replace(/\b\w/g, (char) => char.toUpperCase());
-    title = formattedName ? `${formattedName} | Build to Grow` : 'Build to Grow | Digital Growth Agency';
+    title = formattedName ? `${formattedName} | On Mark` : 'On Mark | Digital Growth Agency';
   }
 
   useEffect(() => {
