@@ -153,7 +153,7 @@ $footer_links = $pdo->query("SELECT * FROM footer_links ORDER BY section_type DE
                                 <input type="hidden" name="existing_logo" value="<?php echo $settings['logo_url']; ?>">
                                 <input type="hidden" name="selected_logo" id="selected_logo">
                                 <div class="flex gap-2">
-                                    <button type="button" onclick="openMediaLibrary('selected_logo', 'preview_logo')" class="bg-gray-100 px-3 py-1 rounded text-xs font-bold">Media</button>
+                                    <button type="button" onclick="openMediaManager('selected_logo', 'preview_logo')" class="bg-gray-100 px-3 py-1 rounded text-xs font-bold">Media</button>
                                     <label class="bg-gray-100 px-3 py-1 rounded text-xs font-bold cursor-pointer">
                                         Upload <input type="file" name="logo_upload" class="hidden" onchange="previewUpload(this, 'preview_logo')">
                                     </label>
@@ -171,7 +171,7 @@ $footer_links = $pdo->query("SELECT * FROM footer_links ORDER BY section_type DE
                                 <input type="hidden" name="existing_footer_logo" value="<?php echo $settings['footer_logo_url']; ?>">
                                 <input type="hidden" name="selected_footer_logo" id="selected_footer_logo">
                                 <div class="flex gap-2">
-                                    <button type="button" onclick="openMediaLibrary('selected_footer_logo', 'preview_f_logo')" class="bg-gray-100 px-3 py-1 rounded text-xs font-bold">Media</button>
+                                    <button type="button" onclick="openMediaManager('selected_footer_logo', 'preview_f_logo')" class="bg-gray-100 px-3 py-1 rounded text-xs font-bold">Media</button>
                                     <label class="bg-gray-100 px-3 py-1 rounded text-xs font-bold cursor-pointer">
                                         Upload <input type="file" name="footer_logo_upload" class="hidden" onchange="previewUpload(this, 'preview_f_logo')">
                                     </label>
@@ -190,7 +190,7 @@ $footer_links = $pdo->query("SELECT * FROM footer_links ORDER BY section_type DE
                                 <input type="hidden" name="existing_favicon" value="<?php echo $settings['site_favicon']; ?>">
                                 <input type="hidden" name="selected_favicon" id="selected_favicon">
                                 <div class="flex gap-2">
-                                    <button type="button" onclick="openMediaLibrary('selected_favicon', 'preview_favicon')" class="bg-gray-100 px-3 py-1 rounded text-xs font-bold">Media</button>
+                                    <button type="button" onclick="openMediaManager('selected_favicon', 'preview_favicon')" class="bg-gray-100 px-3 py-1 rounded text-xs font-bold">Media</button>
                                     <label class="bg-gray-100 px-3 py-1 rounded text-xs font-bold cursor-pointer">
                                         Upload <input type="file" name="favicon_upload" class="hidden" onchange="previewUpload(this, 'preview_favicon')">
                                     </label>
@@ -310,7 +310,7 @@ $footer_links = $pdo->query("SELECT * FROM footer_links ORDER BY section_type DE
 </div>
 
 <script>
-// Tab Logic ও অন্যান্য স্ক্রিপ্ট আগের মতোই থাকবে
+// Tab Logic (আগের মতোই থাকবে)
 document.querySelectorAll('#settingsTabs a').forEach(tab => {
     tab.addEventListener('click', (e) => {
         e.preventDefault();
@@ -326,6 +326,7 @@ document.querySelectorAll('#settingsTabs a').forEach(tab => {
     });
 });
 
+// Menu Builder Logic
 function addNavItem(){
     const div = document.createElement('div');
     div.className = 'flex gap-2 items-center bg-gray-50 p-2 rounded-xl border border-gray-200 animate-in fade-in slide-in-from-top-2 duration-300';
@@ -338,7 +339,7 @@ function addNavItem(){
     document.getElementById('nav-container').appendChild(div);
 }
 
-
+// Local Upload Preview
 function previewUpload(input, previewId) {
     if (input.files && input.files[0]) {
         var reader = new FileReader();
@@ -347,19 +348,10 @@ function previewUpload(input, previewId) {
     }
 }
 
-var targetInputId = null;
-var targetPreviewId = null;
-function openMediaLibrary(inputId, previewId) {
-    targetInputId = inputId;
-    targetPreviewId = previewId;
-    window.open('media.php', 'MediaLibrary', 'width=1000,height=700');
-}
-window.updateImageInput = function(filename, url) {
-    if(targetInputId && targetPreviewId) {
-        document.getElementById(targetInputId).value = filename;
-        document.getElementById(targetPreviewId).src = url;
-    }
-}
+// ফাংশন openMediaManager এবং window.updateImageInput এখান থেকে মুছে ফেলা হয়েছে
+// কারণ এখন এগুলো layout_footer.php তে আছে।
 </script>
+
+<?php require_once '../layout_footer.php'; ?>
 
 <?php require_once '../layout_footer.php'; ?>

@@ -267,19 +267,4 @@ $services = $pdo->query("SELECT title FROM services ORDER BY title ASC")->fetchA
 
 </div>
 
-<script>
-var targetInputId = null;
-
-function openMediaManager(inputId) {
-    targetInputId = inputId;
-    window.open('media.php', 'MediaLibrary', 'width=1000,height=700');
-}
-
-window.updateImageInput = function(filename, url) {
-    if(targetInputId) {
-        var finalPath = filename.startsWith('uploads/') ? filename : 'uploads/' + filename;
-        document.getElementById(targetInputId).value = finalPath;
-    }
-}
-</script>
 <?php require_once '../layout_footer.php'; ?>

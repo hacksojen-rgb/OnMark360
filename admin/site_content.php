@@ -267,7 +267,7 @@ if(empty($adv_features)) {
                 <div class="space-y-4">
                     <div>
                         <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Section Subtitle</label>
-                        <input type="text" name="home_adv_subtitle" value="<?php echo htmlspecialchars($settings['home_adv_subtitle'] ?? 'The Build to Grow Advantage'); ?>" class="w-full p-4 bg-gray-50 rounded-xl font-bold mt-1 border-transparent focus:border-[#014034] focus:bg-white transition-all">
+                        <input type="text" name="home_adv_subtitle" value="<?php echo htmlspecialchars($settings['home_adv_subtitle'] ?? 'Advantage of On Mark'); ?>" class="w-full p-4 bg-gray-50 rounded-xl font-bold mt-1 border-transparent focus:border-[#014034] focus:bg-white transition-all">
                     </div>
                     <div>
                         <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Main Title</label>
@@ -379,7 +379,7 @@ if(empty($adv_features)) {
             <div class="space-y-6">
                 <div>
                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Footer Copyright Text</label>
-                    <input type="text" name="footer_copyright_text" value="<?php echo htmlspecialchars($settings['footer_copyright_text'] ?? '© 2026 Build to Grow. All rights reserved.'); ?>" class="w-full p-4 bg-gray-50 rounded-xl font-bold mt-2 border-transparent focus:border-[#014034] focus:bg-white transition-all">
+                    <input type="text" name="footer_copyright_text" value="<?php echo htmlspecialchars($settings['footer_copyright_text'] ?? '© 2026 On Mark. All rights reserved.'); ?>" class="w-full p-4 bg-gray-50 rounded-xl font-bold mt-2 border-transparent focus:border-[#014034] focus:bg-white transition-all">
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-4 rounded-xl border border-gray-100">
                     <div>

@@ -5,7 +5,7 @@ header('Content-Type: application/json');
 // CORS CONFIG
 // ==============================
 $allowed_origins = [
-    'https://agency.xn--45bl4db.xn--54b7fta0cc',
+    'https://onmark360.com',
     'http://localhost:5173',
     'http://localhost:3000'
 ];

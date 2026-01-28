@@ -156,8 +156,14 @@ if (isset($_GET['edit'])) {
             <div>
                 <label class="text-xs font-bold text-gray-400 uppercase">Image URL</label>
                 <div class="flex gap-2">
-                    <input type="text" name="image_url" value="<?php echo htmlspecialchars($edit['image_url'] ?? ''); ?>" required class="w-full p-3 rounded-lg border bg-white text-xs font-mono">
-                    <a href="media.php" target="_blank" class="bg-gray-200 px-4 py-3 rounded-lg text-xs font-bold">Media</a>
+                    <input type="text" id="hero_image_input" name="image_url" 
+                           value="<?php echo htmlspecialchars($edit['image_url'] ?? ''); ?>" 
+                           required class="w-full p-3 rounded-lg border bg-white text-xs font-mono">
+                    
+                    <button type="button" onclick="openMediaManager('hero_image_input')" 
+                            class="bg-gray-200 px-4 py-3 rounded-lg text-xs font-bold hover:bg-gray-300 transition">
+                        Media
+                    </button>
                 </div>
             </div>
             

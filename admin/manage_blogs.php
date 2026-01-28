@@ -130,7 +130,8 @@ $blogs = $pdo->query("SELECT * FROM blogs ORDER BY id DESC")->fetchAll();
                 </div>
                 <div>
                     <label class="text-[10px] font-black uppercase text-gray-400 ml-2">Option B: Image URL (Link)</label>
-                    <input type="text" name="image_link" value="<?php echo (isset($editing['image_url']) && strpos($editing['image_url'], 'http') === 0) ? $editing['image_url'] : ''; ?>" class="w-full p-3 bg-white rounded-xl outline-none border-none text-xs" placeholder="https://example.com/image.jpg">
+                    <input id="blog_image_input" type="text" name="image_link" value="<?php echo (isset($editing['image_url']) && strpos($editing['image_url'], 'http') === 0) ? $editing['image_url'] : ''; ?>" class="w-full p-3 bg-white rounded-xl outline-none border-none text-xs" placeholder="https://example.com/image.jpg">
+                    <button type="button" onclick="openMediaManager('blog_image_input')" class="bg-gray-200 px-4 py-2 rounded font-bold text-xs">Media</button>
                 </div>
             </div>
             

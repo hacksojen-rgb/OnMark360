@@ -3,16 +3,25 @@ require_once '../db.php';
 require_once '../auth.php';
 require_once '../layout_header.php';
 
-// ১. নতুন টেস্টিমোনিয়াল সেভ করা
+// ১. নতুন টেস্টিমোনিয়াল সেভ করা (আপডেটেড)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_testimonial'])) {
-    $targetDir = "../uploads/";
-    $fileName = "review_" . time() . "_" . basename($_FILES["avatar_file"]["name"]);
+    
     $avatarUrl = null;
 
-    if (move_uploaded_file($_FILES["avatar_file"]["tmp_name"], $targetDir . $fileName)) {
-        $avatarUrl = "uploads/" . $fileName;
+    // ক. ফাইল আপলোড চেক
+    if (isset($_FILES['avatar_file']) && $_FILES['avatar_file']['error'] === 0) {
+        $targetDir = "../uploads/";
+        $fileName = "review_" . time() . "_" . basename($_FILES["avatar_file"]["name"]);
+        if (move_uploaded_file($_FILES["avatar_file"]["tmp_name"], $targetDir . $fileName)) {
+            $avatarUrl = "uploads/" . $fileName;
+        }
+    }
+    // খ. টেক্সট লিংক / মিডিয়া চেক
+    elseif (!empty($_POST['avatar_url_text'])) {
+        $avatarUrl = $_POST['avatar_url_text'];
     }
 
+    // ডাটাবেজ ইনসার্ট (যদি ছবি ছাড়াও এলাউ করতে চান তবে if শর্ত সরাতে পারেন)
     $stmt = $pdo->prepare("INSERT INTO testimonials (name, role, company, content, avatar_url) VALUES (?, ?, ?, ?, ?)");
     $stmt->execute([
         $_POST['name'], 
@@ -64,11 +73,22 @@ $reviews = $pdo->query("SELECT * FROM testimonials ORDER BY id DESC")->fetchAll(
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Review Content</label>
-                    <textarea name="content" rows="3" required class="w-full p-4 bg-gray-50 rounded-2xl text-sm font-medium border-none focus:ring-2 focus:ring-primary/20"></textarea>
+                    <textarea name="content" rows="5" required class="w-full p-4 bg-gray-50 rounded-2xl text-sm font-medium border-none focus:ring-2 focus:ring-primary/20"></textarea>
                 </div>
-                <div>
-                    <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Client Photo</label>
-                    <input type="file" name="avatar_file" required class="w-full p-3 bg-gray-50 rounded-2xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-primary file:text-white hover:file:bg-black transition-all">
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Option 1: Upload Photo</label>
+                        <input type="file" name="avatar_file" class="w-full p-3 bg-gray-50 rounded-2xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-primary file:text-white hover:file:bg-black transition-all">
+                    </div>
+                    
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Option 2: Media / Link</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="testimonial_img_input" name="avatar_url_text" placeholder="Image URL" class="w-full p-4 bg-gray-50 rounded-2xl text-sm font-bold border-none focus:ring-2 focus:ring-primary/20">
+                            <button type="button" onclick="openMediaManager('testimonial_img_input')" class="bg-gray-200 text-gray-700 px-6 rounded-2xl font-bold text-xs hover:bg-gray-300">Media</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -90,7 +110,14 @@ $reviews = $pdo->query("SELECT * FROM testimonials ORDER BY id DESC")->fetchAll(
             <p class="text-gray-600 mb-8 italic text-sm leading-relaxed min-h-[80px]">"<?php echo $rev['content']; ?>"</p>
             
             <div class="flex items-center gap-4">
-                <img src="../<?php echo $rev['avatar_url']; ?>" class="w-12 h-12 rounded-full object-cover bg-gray-100">
+                <?php 
+                    $avatar = $rev['avatar_url'];
+                    if ($avatar && strpos($avatar, 'http') !== 0) {
+                        $avatar = '../' . $avatar;
+                    }
+                    if (!$avatar) $avatar = 'https://placehold.co/100x100?text=User';
+                ?>
+                <img src="<?php echo $avatar; ?>" class="w-12 h-12 rounded-full object-cover bg-gray-100">
                 <div>
                     <h4 class="font-bold text-gray-900 text-sm"><?php echo $rev['name']; ?></h4>
                     <p class="text-[10px] text-primary font-black uppercase"><?php echo $rev['role']; ?>, <?php echo $rev['company']; ?></p>
