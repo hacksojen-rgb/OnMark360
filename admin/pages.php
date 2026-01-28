@@ -152,7 +152,7 @@ $pages = $pdo->query("SELECT * FROM pages ORDER BY id DESC")->fetchAll();
                     </div>
                 </div>
                 <div class="flex space-x-2 opacity-50 group-hover:opacity-100 transition-opacity">
-                    <a href="../../page.php?slug=<?php echo $p['slug']; ?>" target="_blank" class="p-3 bg-gray-50 text-gray-400 hover:text-blue-500 rounded-xl" title="View">
+                    <a href="/#/<?php echo $p['slug']; ?>" target="_blank" class="p-3 bg-gray-50 text-gray-400 hover:text-blue-500 rounded-xl" title="View">
                         <i data-lucide="eye" class="w-5 h-5"></i>
                     </a>
                     <a href="pages.php?edit=<?php echo $p['id']; ?>" class="p-3 bg-gray-50 text-gray-400 hover:text-[#014034] rounded-xl" title="Edit">
