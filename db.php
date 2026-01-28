@@ -3,9 +3,9 @@
 ob_start(); 
 
 $host = 'localhost';
-$db   = 'princepanjabibd_agency_db'; 
-$user = 'princepanjabibd_princepanjabibd';  
-$pass = 'IPM&~#nYJhx';
+$db   = 'futureba_OnMark'; 
+$user = 'futureba_OnMark360';  
+$pass = 'W4hF#8@yt{=kdeBd';
 $charset = 'utf8mb4';
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
