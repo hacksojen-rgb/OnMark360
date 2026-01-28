@@ -1,91 +1,119 @@
 <?php
-require_once '../auth.php';
+// ১. এরর রিপোর্টিং চালু করা (ডিবাগিংয়ের জন্য)
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+session_start();
+
+// ২. স্মার্ট ফাইল ইনক্লুশন
+$auth_path = file_exists(__DIR__ . '/auth.php') ? __DIR__ . '/auth.php' : __DIR__ . '/../auth.php';
+$header_path = file_exists(__DIR__ . '/layout_header.php') ? __DIR__ . '/layout_header.php' : __DIR__ . '/../layout_header.php';
+
+// ৩. Auth লোড
+if (file_exists($auth_path)) {
+    require_once $auth_path;
+} else {
+    die("<div style='color:red;padding:20px;'>auth.php পাওয়া যায়নি</div>");
+}
+
+if (!function_exists('generate_csrf_token')) {
+    die("<div style='color:red;padding:20px;'>CSRF function missing</div>");
 }
 
 $is_popup = isset($_GET['popup']);
 
-if (!$is_popup) {
-    require_once '../layout_header.php';
+if (!$is_popup && file_exists($header_path)) {
+    require_once $header_path;
 }
 
 $upload_dir = '../uploads/';
-
-/* -------------------------
-   Ensure upload dir exists
--------------------------- */
-if (!is_dir($upload_dir)) {
-    mkdir($upload_dir, 0755, true);
+if (!file_exists($upload_dir)) {
+    mkdir($upload_dir, 0777, true);
 }
 
-/* -------------------------
-   Flash helpers
--------------------------- */
-$flash_error   = $_SESSION['flash_error']   ?? null;
-$flash_success = $_SESSION['flash_success'] ?? null;
-unset($_SESSION['flash_error'], $_SESSION['flash_success']);
+/* ===============================
+   Flash Message Helpers
+================================ */
+function set_flash($type, $msg) {
+    $_SESSION['flash'] = ['type' => $type, 'msg' => $msg];
+}
+function show_flash() {
+    if (!empty($_SESSION['flash'])) {
+        $f = $_SESSION['flash'];
+        unset($_SESSION['flash']);
+        $color = $f['type'] === 'error' ? 'red' : 'green';
+        echo "<div class='mb-4 p-3 rounded-lg bg-{$color}-50 text-{$color}-600 text-sm font-bold'>{$f['msg']}</div>";
+    }
+}
 
-/* -------------------------
-   Delete Logic (UNCHANGED)
--------------------------- */
+/* ===============================
+   DELETE LOGIC
+================================ */
 if (isset($_POST['delete_image'])) {
     verify_csrf_token($_POST['csrf_token'] ?? '');
-    
-    $file_path = $upload_dir . basename($_POST['delete_image']);
-    if (file_exists($file_path)) {
-        unlink($file_path);
-        $_SESSION['flash_success'] = 'Image deleted successfully.';
+
+    $file = basename($_POST['delete_image']);
+    $path = $upload_dir . $file;
+
+    if (is_file($path)) {
+        unlink($path);
+        set_flash('success', 'Image deleted successfully');
     } else {
-        $_SESSION['flash_error'] = 'File not found.';
+        set_flash('error', 'File not found');
     }
 
     header("Location: media.php" . ($is_popup ? "?popup=1" : ""));
     exit;
 }
 
-/* -------------------------
-   Upload Logic (EXTENDED)
--------------------------- */
+/* ===============================
+   UPLOAD LOGIC (SECURED)
+================================ */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['new_media'])) {
     verify_csrf_token($_POST['csrf_token'] ?? '');
 
     $file = $_FILES['new_media'];
 
-    if ($file['error'] !== 0) {
-        $_SESSION['flash_error'] = 'Upload failed. Please try again.';
-    } else {
+    // Size limit (2MB)
+    if ($file['size'] > 2 * 1024 * 1024) {
+        set_flash('error', 'File too large. Max 2MB allowed.');
+        header("Location: media.php" . ($is_popup ? "?popup=1" : ""));
+        exit;
+    }
 
-        /* ---- Added from old behaviour ---- */
-        $allowed_ext  = ['jpg','jpeg','png','webp','svg'];
-        $allowed_mime = ['image/jpeg','image/png','image/webp','image/svg+xml'];
-        $max_size     = 2 * 1024 * 1024; // 2MB
+    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 
-        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    // Extension whitelist
+    $allowed_ext = ['jpg','jpeg','png','webp'];
+    if (!in_array($ext, $allowed_ext)) {
+        set_flash('error', 'Invalid file type');
+        header("Location: media.php" . ($is_popup ? "?popup=1" : ""));
+        exit;
+    }
 
-        if (!in_array($ext, $allowed_ext)) {
-            $_SESSION['flash_error'] = 'Invalid file type.';
-        }
-        elseif ($file['size'] > $max_size) {
-            $_SESSION['flash_error'] = 'File size exceeds limit (2MB).';
-        }
-        else {
-            $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            $mime  = finfo_file($finfo, $file['tmp_name']);
-            finfo_close($finfo);
+    // MIME validation
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mime = finfo_file($finfo, $file['tmp_name']);
+    finfo_close($finfo);
 
-            if (!in_array($mime, $allowed_mime)) {
-                $_SESSION['flash_error'] = 'Invalid image format.';
-            } else {
-                $new_name = 'media_' . time() . rand(100,999) . '.' . $ext;
+    $allowed_mime = [
+        'image/jpeg',
+        'image/png',
+        'image/webp'
+    ];
 
-                if (move_uploaded_file($file['tmp_name'], $upload_dir . $new_name)) {
-                    $_SESSION['flash_success'] = 'Image uploaded successfully.';
-                } else {
-                    $_SESSION['flash_error'] = 'Could not save uploaded file.';
-                }
-            }
+    if (!in_array($mime, $allowed_mime)) {
+        set_flash('error', 'Invalid image MIME type');
+        header("Location: media.php" . ($is_popup ? "?popup=1" : ""));
+        exit;
+    }
+
+    if ($file['error'] === 0) {
+        $new_name = 'media_' . time() . rand(100,999) . '.' . $ext;
+        if (move_uploaded_file($file['tmp_name'], $upload_dir . $new_name)) {
+            set_flash('success', 'Image uploaded successfully');
+        } else {
+            set_flash('error', 'Upload failed. Check permissions.');
         }
     }
 
@@ -93,12 +121,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['new_media'])) {
     exit;
 }
 
-/* -------------------------
-   Load images (UNCHANGED)
--------------------------- */
+/* ===============================
+   LOAD IMAGES
+================================ */
 $files = scandir($upload_dir);
 $images = array_filter($files, function($file) use ($upload_dir) {
-    return is_file($upload_dir . $file) && preg_match('/\.(jpg|jpeg|png|webp|svg)$/i', $file);
+    return is_file($upload_dir . $file) && preg_match('/\.(jpg|jpeg|png|webp)$/i', $file);
 });
 rsort($images);
 ?>
