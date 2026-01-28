@@ -1,0 +1,11 @@
+RewriteEngine On
+
+# API রিকোয়েস্টগুলোকে api ফোল্ডারে পাঠিয়ে দেওয়া
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^api/(.*)$ api/$1.php [L,QSA]
+
+# React ফ্রন্টএন্ডের জন্য রাউটিং
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.html [L]
