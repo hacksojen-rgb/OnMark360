@@ -13,7 +13,7 @@ export const SITE_SETTINGS: SiteSettings = {
   companyName: 'OnMark360', 
   address: '5000 W International Airport Rd', // আপনার নতুন ঠিকানা দিন
   phone: '+1-201-642-2724',
-  email: 'support@onmark360.com'
+  email: 'support@onmark360.com',
   facebook: '#',
   twitter: '#',
   instagram: '#',
