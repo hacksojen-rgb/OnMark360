@@ -8,28 +8,37 @@ const Navbar: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
   const [settings, setSettings] = useState<any>(null);
   const [buttons, setButtons] = useState<any>({});
+  // 🔥 নতুন স্টেট: ডাটা লোড হচ্ছে কিনা তা বোঝার জন্য
+  const [loading, setLoading] = useState(true); 
   const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
 
+    // বাটন ফেচ
     fetch(`${API_BASE}/get-buttons.php`)
       .then(res => res.json())
       .then(data => setButtons(data.buttons || data))
       .catch(err => console.error("Button Config Error:", err));
 
+    // সেটিংস ফেচ
     fetch(`${API_BASE}/get-settings.php`)
       .then(res => res.json())
-      .then(data => setSettings(data.settings ?? data))
-      .catch(err => console.error("Navbar Config Error:", err));
+      .then(data => {
+        setSettings(data.settings ?? data);
+        setLoading(false); // 🔥 ডাটা আসার পর লোডিং বন্ধ হবে
+      })
+      .catch(err => {
+        console.error("Navbar Config Error:", err);
+        setLoading(false);
+      });
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
 
-  // ✅ FIX: মেনু ড্যাশবোর্ড থেকে লোড হবে, না থাকলে ডিফল্ট দেখাবে
   const navLinks = (settings?.header_nav && settings.header_nav.length > 0) 
     ? settings.header_nav 
     : [
@@ -43,11 +52,8 @@ const Navbar: React.FC = () => {
       ];
 
   const toggleMenu = () => setIsOpen(!isOpen);
-
-  // ✅ FIX: কালার বাগ ফিক্স (site_title এর বদলে theme_color ব্যবহার)
   const brandColor = settings?.theme_color || '#014034';
 
-  // ✅ Helper: কালারকে ট্রান্সপারেন্ট করার জন্য
   const hexToRgba = (hex: string, opacity: number) => {
     let c: any;
     if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){
@@ -58,26 +64,32 @@ const Navbar: React.FC = () => {
         c= '0x'+c.join('');
         return 'rgba('+[(c>>16)&255, (c>>8)&255, c&255].join(',')+','+opacity+')';
     }
-    return hex; // ফেইলসেফ
+    return hex; 
   };
 
-  // ✅ FIX: ডাইনামিক ব্যাকগ্রাউন্ড স্টাইল (কালার চেঞ্জ করলে এটাও চেঞ্জ হবে)
   const navStyle = {
     backgroundColor: scrolled 
-      ? hexToRgba('#ffffff', 0.95) // স্ক্রল করলে সাদা ৯৫%
-      : hexToRgba('#ffffff', 0.60), // শুরুতে সাদা ৬০% (ট্রান্সপারেন্ট)
-    // আপনি চাইলে '#ffffff' এর জায়গায় brandColor দিতে পারেন যদি রঙিন ন্যাভবার চান
+      ? hexToRgba('#ffffff', 0.95) 
+      : hexToRgba('#ffffff', 0.60),
     backdropFilter: 'blur(12px)',
     borderBottom: scrolled ? '1px solid rgba(0,0,0,0.05)' : '1px solid rgba(255,255,255,0.2)'
   };
 
   const renderLogoContent = () => {
+    // 🔥 ১. যদি লোডিং চলে, তবে একটি হালকা লোডিং বক্স দেখাবে (ভুল লোগো দেখাবে না)
+    if (loading) {
+        return <div className="h-10 w-32 bg-gray-200 animate-pulse rounded-lg"></div>;
+    }
+
+    // ২. ডাটা আসার পর লোগো দেখাবে
     if (settings?.logo_url) {
       const logoSrc = settings.logo_url.startsWith('http')
         ? settings.logo_url
         : `${API_BASE.replace('/api', '')}/uploads/${settings.logo_url}`;
-      return <img src={logoSrc} alt="Logo" className="h-10 w-auto" />;
+      return <img src={logoSrc} alt="Logo" className="h-10 w-auto object-contain" />;
     }
+
+    // ৩. যদি লোগো না থাকে, টেক্সট দেখাবে
     const companyName = settings?.company_name || SITE_SETTINGS.companyName;
     const nameParts = companyName.split(' ');
     return (
@@ -108,18 +120,18 @@ const Navbar: React.FC = () => {
               <Link
                 key={link.path}
                 to={link.path}
-                style={{
+                style={{ 
                     color: location.pathname === link.path ? brandColor : '#1f2937'
                 }}
                 className={`text-sm font-bold transition-all duration-300 hover:opacity-70 ${
                   location.pathname === link.path ? 'scale-105' : 'hover:scale-105'
                 }`}
               >
-                {link.label || link.name} {/* API label সাপোর্ট */}
+                {link.label || link.name}
               </Link>
             ))}
             <div className="flex items-center space-x-4 pl-6 border-l border-gray-300/50">
-              <Link
+              <Link 
                 to={buttons.nav_quote?.url || "/get-quote"}
                 style={buttons.nav_quote ? buttons.nav_quote.style : { backgroundColor: brandColor, color: '#ffffff' }}
                 className="text-white px-7 py-3 rounded-full text-sm font-extrabold hover:opacity-90 transition-all shadow-lg hover:-translate-y-0.5"
@@ -129,7 +141,7 @@ const Navbar: React.FC = () => {
             </div>
           </div>
 
-          <button
+          <button 
             style={{ color: brandColor }}
             className="lg:hidden p-2 rounded-xl bg-white/20 backdrop-blur-sm hover:bg-white/40 transition-all"
             onClick={toggleMenu}
@@ -139,7 +151,7 @@ const Navbar: React.FC = () => {
         </div>
       </div>
 
-      {/* মোবাইল মেনু */}
+      {/* Mobile Menu */}
       <div className={`lg:hidden absolute w-full bg-white/95 backdrop-blur-xl shadow-2xl transition-all duration-300 ease-in-out border-b border-gray-100 ${isOpen ? 'max-h-screen opacity-100 py-8 translate-y-0' : 'max-h-0 opacity-0 overflow-hidden -translate-y-4'}`}>
         <div className="flex flex-col items-center space-y-6">
           {navLinks.map((link: any) => (

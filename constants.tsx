@@ -1,7 +1,7 @@
 
 import { Service, PortfolioProject, Testimonial, BlogPost, HeroSlide, PricingPlan, SiteSettings } from './types';
 
-export const API_BASE = 'https://agency.xn--45bl4db.xn--54b7fta0cc/api';
+export const API_BASE = 'https://onmark360.com/api';
 export const COLORS = {
   primary: '#014034',
   primaryLight: '#00695c',
@@ -10,10 +10,10 @@ export const COLORS = {
 };
 
 export const SITE_SETTINGS: SiteSettings = {
-  companyName: 'Build to Grow',
-  address: '123 Innovation Drive, Tech Valley, CA 94043',
-  phone: '+1 (555) 123-4567',
-  email: 'hello@buildtogrow.com',
+  companyName: 'OnMark360', 
+  address: '5000 W International Airport Rd', // আপনার নতুন ঠিকানা দিন
+  phone: '+1-201-642-2724',
+  email: 'support@onmark360.com'
   facebook: '#',
   twitter: '#',
   instagram: '#',
