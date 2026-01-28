@@ -12,6 +12,7 @@ if (isset($_GET['delete'])) {
 
 // ২. অ্যাড বা এডিট হ্যান্ডেল করা
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf_token($_POST['csrf_token'] ?? '');
     $features = json_encode(array_filter(array_map('trim', explode("\n", $_POST['features']))));
     $icon = $_POST['icon'] ?? 'zap';
 
@@ -52,6 +53,7 @@ if (isset($_GET['edit'])) {
     <div class="bg-white p-10 rounded-[3rem] border border-gray-100 shadow-sm mb-10">
         <h3 class="text-2xl font-black mb-6 uppercase text-primary"><?php echo $editing ? 'Edit' : 'New'; ?> Service</h3>
         <form method="POST" class="space-y-6">
+            <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
             <input type="hidden" name="id" value="<?php echo $editing['id'] ?? ''; ?>">
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">

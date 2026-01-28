@@ -61,7 +61,7 @@ if (isset($_GET['delete'])) {
 // Save / Update Logic
 // =======================
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
+    verify_csrf_token($_POST['csrf_token'] ?? '');
     $uploaded  = uploadPortfolioImg($_FILES['p_file']);
     $final_img = $uploaded 
     ?: ($_POST['p_link'] ?? '') 
@@ -121,6 +121,7 @@ $services = $pdo->query("SELECT title FROM services ORDER BY title ASC")->fetchA
         </h2>
 
         <form method="POST" enctype="multipart/form-data" class="space-y-4">
+            <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
             <input type="hidden" name="id" value="<?php echo $editing['id'] ?? ''; ?>">
             <input type="hidden" name="old_img" value="<?php echo $editing['image_url'] ?? ''; ?>">
 

@@ -8,6 +8,7 @@ require_once '../layout_header.php';
 
 // ১. সেটিংস আপডেট হ্যান্ডলার
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_tracking'])) {
+    verify_csrf_token($_POST['csrf_token'] ?? '');
     try {
         // চেকবক্স হ্যান্ডলিং (Checkboxes return 'on' or nothing)
         $browser = isset($_POST['enable_browser_tracking']) ? 1 : 0;
@@ -79,6 +80,7 @@ if (!$config) {
     </div>
 
     <form method="POST" class="space-y-8">
+        <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
         <input type="hidden" name="update_tracking" value="1">
 
         <div class="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm">

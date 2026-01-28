@@ -19,6 +19,7 @@ if (isset($_POST['delete_image'])) {
 
 // -------- Upload --------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['new_media'])) {
+    verify_csrf_token($_POST['csrf_token'] ?? '');
     $file = $_FILES['new_media'];
     if ($file['error'] === 0) {
         $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
@@ -58,6 +59,7 @@ rsort($images);
 <h2 class="text-2xl font-bold text-[#014034]">Media Library</h2>
 
 <form method="POST" enctype="multipart/form-data">
+<input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
 <label class="bg-[#014034] text-white px-4 py-2 rounded-lg cursor-pointer hover:bg-[#00332a] text-sm font-bold flex items-center gap-2 shadow-lg hover:scale-105 transition-all">
 <i data-lucide="upload" class="w-4 h-4"></i>
 Upload New
@@ -94,6 +96,7 @@ title="<?= $img ?>">
 </p>
 
 <form method="POST" onsubmit="return confirm('Delete permanently?');">
+<input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
 <input type="hidden" name="delete_image" value="<?= $img ?>">
 <button class="text-gray-400 hover:text-red-500 p-1">
 <i data-lucide="trash-2" class="w-3 h-3"></i>

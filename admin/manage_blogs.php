@@ -49,6 +49,7 @@ if (isset($_GET['delete'])) {
 
 // ৪. নতুন ব্লগ পাবলিশ বা আপডেট করা
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf_token($_POST['csrf_token'] ?? '');
     // ইমেজ লজিক: নতুন আপলোড হলে সেটা নেবে, নাহলে লিংকের ইনপুট নেবে, আর কিছু না দিলে আগেরটাই থাকবে
     $image = processImage($_FILES['blog_image']);
     if (!$image) {
@@ -78,6 +79,7 @@ $blogs = $pdo->query("SELECT * FROM blogs ORDER BY id DESC")->fetchAll();
     <div class="bg-white p-10 rounded-[3rem] shadow-sm border border-gray-100">
         <h1 class="text-3xl font-black text-primary mb-8 uppercase"><?php echo $editing ? 'Edit' : 'Create New'; ?> Post</h1>
         <form method="POST" enctype="multipart/form-data" class="space-y-6">
+            <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
             <input type="hidden" name="id" value="<?php echo $editing['id'] ?? ''; ?>">
             <input type="hidden" name="old_image" value="<?php echo $editing['image_url'] ?? ''; ?>">
 

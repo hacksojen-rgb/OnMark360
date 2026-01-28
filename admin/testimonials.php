@@ -5,7 +5,7 @@ require_once '../layout_header.php';
 
 // ১. নতুন টেস্টিমোনিয়াল সেভ করা (আপডেটেড)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_testimonial'])) {
-    
+    verify_csrf_token($_POST['csrf_token'] ?? '');
     $avatarUrl = null;
 
     // ক. ফাইল আপলোড চেক
@@ -53,6 +53,7 @@ $reviews = $pdo->query("SELECT * FROM testimonials ORDER BY id DESC")->fetchAll(
     <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm mb-12">
         <h3 class="text-lg font-black text-primary mb-6 uppercase border-b pb-2">Add New Review</h3>
         <form method="POST" enctype="multipart/form-data" class="space-y-6">
+            <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
             <input type="hidden" name="add_testimonial" value="1">
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">

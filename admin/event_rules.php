@@ -41,7 +41,7 @@ $message = '';
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    
+    verify_csrf_token($_POST['csrf_token'] ?? '');
     // ADD NEW RULE
     if (isset($_POST['action']) && $_POST['action'] === 'add') {
         $selector = isset($_POST['selector']) ? trim($_POST['selector']) : '';
@@ -148,6 +148,7 @@ try {
                 </h3>
                 
                 <form method="POST" class="space-y-4">
+                    <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                     <input type="hidden" name="action" value="add">
                     
                     <div>
@@ -219,6 +220,7 @@ try {
                                         <td class="p-4 font-bold"><?php echo htmlspecialchars($rule['event_name']); ?></td>
                                         <td class="p-4">
                                             <form method="POST" class="inline">
+                                                <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                                                 <input type="hidden" name="action" value="toggle">
                                                 <input type="hidden" name="rule_id" value="<?php echo $rule['id']; ?>">
                                                 <input type="hidden" name="current_status" value="<?php echo $rule['status']; ?>">
@@ -229,6 +231,7 @@ try {
                                         </td>
                                         <td class="p-4 text-right">
                                             <form method="POST" onsubmit="return confirm('Delete this rule?');">
+                                                <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                                                 <input type="hidden" name="action" value="delete">
                                                 <input type="hidden" name="rule_id" value="<?php echo $rule['id']; ?>">
                                                 <button type="submit" class="text-gray-400 hover:text-red-500 p-2">

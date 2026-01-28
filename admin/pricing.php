@@ -9,6 +9,7 @@ if (isset($_GET['delete'])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf_token($_POST['csrf_token'] ?? '');
     $features = json_encode(array_filter(array_map('trim', explode("\n", $_POST['features']))));
     $is_popular = isset($_POST['is_popular']) ? 1 : 0;
     
@@ -46,6 +47,7 @@ if (isset($_GET['edit'])) {
     <div class="bg-white p-10 rounded-[3rem] border border-gray-100 shadow-sm max-w-2xl mx-auto">
         <h3 class="text-2xl font-black mb-8 uppercase text-primary">Plan Configuration</h3>
         <form method="POST" class="space-y-6">
+            <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
             <input type="hidden" name="id" value="<?php echo $edit['id'] ?? ''; ?>">
             <div class="grid grid-cols-2 gap-6">
                 <input type="text" name="name" value="<?php echo $edit['name'] ?? ''; ?>" placeholder="Tier Name (e.g. Startup)" required class="px-6 py-4 rounded-2xl bg-gray-50 outline-none font-bold">

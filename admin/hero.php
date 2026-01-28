@@ -17,6 +17,7 @@ $error = '';
 
 // Handle Actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf_token($_POST['csrf_token'] ?? '');
     $action = $_POST['action'] ?? '';
     
     try {
@@ -97,6 +98,7 @@ if (isset($_GET['edit'])) {
     <div class="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
         <h3 class="text-xl font-black uppercase mb-6"><?php echo $edit ? 'Edit Slide' : 'Create Slide'; ?></h3>
         <form method="POST" class="space-y-6">
+            <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
             <input type="hidden" name="action" value="<?php echo $edit ? 'edit' : 'add'; ?>">
             <input type="hidden" name="id" value="<?php echo $edit['id'] ?? ''; ?>">
             
@@ -200,6 +202,7 @@ if (isset($_GET['edit'])) {
                 <div class="flex gap-2">
                     <a href="hero.php?edit=<?php echo $s['id']; ?>" class="text-blue-600 font-bold text-xs uppercase">Edit</a>
                     <form method="POST" onsubmit="return confirm('Delete?')" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                         <input type="hidden" name="action" value="delete">
                         <input type="hidden" name="id" value="<?php echo $s['id']; ?>">
                         <button class="text-red-600 font-bold text-xs uppercase">Delete</button>

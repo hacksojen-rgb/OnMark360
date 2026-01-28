@@ -17,7 +17,7 @@ if (isset($_GET['delete_link'])) {
 
 // সেটিংস সেভ হ্যান্ডলার
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    
+    verify_csrf_token($_POST['csrf_token'] ?? '');
     // ১. মেইন সেটিংস (General & Branding)
     if (isset($_POST['action']) && $_POST['action'] == 'main_settings') {
         
@@ -122,6 +122,7 @@ $footer_links = $pdo->query("SELECT * FROM footer_links ORDER BY section_type DE
 
     <div id="general" class="tab-content">
         <form method="POST" enctype="multipart/form-data" class="space-y-8">
+            <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
             <input type="hidden" name="action" value="main_settings">
             
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -247,6 +248,7 @@ $footer_links = $pdo->query("SELECT * FROM footer_links ORDER BY section_type DE
                 <?php endforeach; ?>
             </div>
             <form method="POST" class="bg-gray-50 p-6 rounded-2xl">
+                <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                 <input type="hidden" name="action" value="add_social">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <input type="text" name="platform" placeholder="Platform (e.g. Facebook)" required class="p-3 rounded-xl border font-bold">
@@ -261,6 +263,7 @@ $footer_links = $pdo->query("SELECT * FROM footer_links ORDER BY section_type DE
     <div id="footer" class="tab-content hidden">
          <div class="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm">
             <form method="POST">
+                <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                 <input type="hidden" name="action" value="update_footer_status">
                 <h3 class="text-lg font-black text-[#014034] mb-6 uppercase">Footer Visibility</h3>
                 <label class="flex items-center gap-3 cursor-pointer mb-6">
@@ -292,6 +295,7 @@ $footer_links = $pdo->query("SELECT * FROM footer_links ORDER BY section_type DE
 
             <div class="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm h-fit">
                 <form method="POST">
+                    <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                     <input type="hidden" name="action" value="add_footer_link">
                     <h3 class="text-lg font-black text-[#014034] mb-6 uppercase">Add New Footer Link</h3>
                     <div class="space-y-4">

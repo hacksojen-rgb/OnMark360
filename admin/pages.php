@@ -20,6 +20,7 @@ if (isset($_GET['delete'])) {
 
 // ৩. সেভ বা আপডেট লজিক
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf_token($_POST['csrf_token'] ?? '');
     $title = $_POST['title'];
     // স্লাগ তৈরি: ইউজার দিলে সেটা, না দিলে টাইটেল থেকে অটো
     $slug = !empty($_POST['slug']) ? $_POST['slug'] : $title;
@@ -53,6 +54,7 @@ $pages = $pdo->query("SELECT * FROM pages ORDER BY id DESC")->fetchAll();
         </div>
 
         <form method="POST" class="space-y-6">
+            <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
             <input type="hidden" name="id" value="<?php echo $editing['id'] ?? ''; ?>">
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">

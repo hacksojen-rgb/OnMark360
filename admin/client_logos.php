@@ -7,7 +7,7 @@ require_once '../layout_header.php';
 // ১. লোগো আপলোড এবং সেভ লজিক (Validated)
 // ==============================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_logo'])) {
-
+    verify_csrf_token($_POST['csrf_token'] ?? '');
     $finalUrl = null;
 
     // ক. যদি নতুন ফাইল আপলোড করা হয়
@@ -90,6 +90,7 @@ $logos = $pdo->query("SELECT * FROM client_logos ORDER BY id DESC")->fetchAll();
         <h3 class="text-lg font-black text-primary mb-6 uppercase border-b pb-2">Add New Logo</h3>
 
         <form method="POST" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+            <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
             <input type="hidden" name="add_logo" value="1">
 
             <div>

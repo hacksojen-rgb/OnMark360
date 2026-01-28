@@ -4,6 +4,7 @@ require '../auth.php';
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf_token($_POST['csrf_token'] ?? '');
     if (login($_POST['username'], $_POST['password'], $pdo)) {
         header('Location: index.php');
         exit();
@@ -41,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <form method="POST" class="space-y-6">
+                <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                 <div class="space-y-2">
                     <label class="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] ml-2">System User</label>
                     <div class="relative">

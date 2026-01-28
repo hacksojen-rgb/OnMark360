@@ -5,6 +5,7 @@ require_once '../layout_header.php';
 
 // আপডেট লজিক
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id'])) {
+    verify_csrf_token($_POST['csrf_token'] ?? '');
     $stmt = $pdo->prepare("UPDATE site_buttons SET label=?, url=?, bg_color=?, text_color=?, border_color=? WHERE id=?");
     $stmt->execute([$_POST['label'], $_POST['url'], $_POST['bg_color'], $_POST['text_color'], $_POST['border_color'], $_POST['id']]);
     header('Location: buttons.php?success=1'); exit();
@@ -37,6 +38,7 @@ $buttons = $pdo->query("SELECT * FROM site_buttons ORDER BY id ASC")->fetchAll()
                     </a>
                 </div>
                 <form method="POST" class="space-y-4">
+                    <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                     <input type="hidden" name="id" value="<?php echo $btn['id']; ?>">
                     <div class="grid grid-cols-2 gap-4">
                         <div>
