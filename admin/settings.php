@@ -18,21 +18,24 @@ if (isset($_GET['delete_link'])) {
 // সেটিংস সেভ হ্যান্ডলার
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf_token($_POST['csrf_token'] ?? '');
-    // ১. মেইন সেটিংস (General & Branding)
+    
+    // ১. মেইন সেটিংস
     if (isset($_POST['action']) && $_POST['action'] == 'main_settings') {
         
         $upload_dir = '../uploads/';
         
         function getImagePath($fileKey, $hiddenKey, $existingVal) {
             global $upload_dir;
+            // নতুন আপলোড হলে
             if (isset($_FILES[$fileKey]) && $_FILES[$fileKey]['error'] === 0) {
                 $ext = pathinfo($_FILES[$fileKey]['name'], PATHINFO_EXTENSION);
                 $newName = 'brand_' . time() . rand(10,99) . '.' . $ext;
                 move_uploaded_file($_FILES[$fileKey]['tmp_name'], $upload_dir . $newName);
                 return $newName;
             } 
+            // মিডিয়া থেকে সিলেক্ট করলে (শুধু ফাইলের নাম নেব)
             elseif (!empty($_POST[$hiddenKey])) {
-                return $_POST[$hiddenKey];
+                return basename($_POST[$hiddenKey]); // 🔥 ফিক্স: পাথ বাদ দিয়ে শুধু নাম
             }
             return $existingVal;
         }
@@ -77,16 +80,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // ২. ফুটার স্ট্যাটাস আপডেট (যাতে জেনারেল ডাটা না মোছে)
+    // ২. ফুটার স্ট্যাটাস আপডেট
     if (isset($_POST['action']) && $_POST['action'] == 'update_footer_status') {
         $status = isset($_POST['show_footer_links']) ? 1 : 0;
         $pdo->prepare("UPDATE site_settings SET show_footer_links = ? WHERE id = 1")->execute([$status]);
         header('Location: settings.php?success=1#footer'); exit();
     }
 
-    // ৩. সোশ্যাল মিডিয়া অ্যাড (FIXED COLUMN NAME)
+    // ৩. সোশ্যাল মিডিয়া অ্যাড
     if (isset($_POST['action']) && $_POST['action'] == 'add_social') {
-        // ✅ ফিক্স: platform_name পরিবর্তন করে platform করা হয়েছে
         $stmt = $pdo->prepare("INSERT INTO social_links (platform, icon_code, url) VALUES (?, ?, ?)");
         $stmt->execute([$_POST['platform'], $_POST['icon'], $_POST['url']]);
         header('Location: settings.php#social'); exit();
@@ -144,6 +146,7 @@ $footer_links = $pdo->query("SELECT * FROM footer_links ORDER BY section_type DE
 
                 <div class="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm">
                     <h3 class="text-lg font-black text-[#014034] mb-6 uppercase">Branding</h3>
+                    
                     <div class="mb-6">
                         <label class="text-xs font-bold text-gray-400 uppercase block mb-2">Main Logo</label>
                         <div class="flex items-center gap-4">
@@ -162,6 +165,7 @@ $footer_links = $pdo->query("SELECT * FROM footer_links ORDER BY section_type DE
                             </div>
                         </div>
                     </div>
+
                     <div class="mb-6">
                         <label class="text-xs font-bold text-gray-400 uppercase block mb-2">Footer Logo</label>
                         <div class="flex items-center gap-4">
@@ -206,10 +210,8 @@ $footer_links = $pdo->query("SELECT * FROM footer_links ORDER BY section_type DE
                 <h3 class="font-black uppercase mb-4 text-[#014034]">Header Menu Builder</h3>
                 <div id="nav-container" class="space-y-3">
                     <?php
-                    // ডাটাবেজ থেকে ডাটা ডিকোড করা
                     $navs = json_decode($settings['header_nav'] ?? '[]', true);
-                    if (!is_array($navs)) $navs = []; // ফেইলসেফ
-                    
+                    if (!is_array($navs)) $navs = [];
                     foreach($navs as $index => $nav):
                     ?>
                     <div class="flex gap-2 items-center bg-gray-50 p-2 rounded-xl border border-gray-200">
@@ -220,12 +222,10 @@ $footer_links = $pdo->query("SELECT * FROM footer_links ORDER BY section_type DE
                     </div>
                     <?php endforeach; ?>
                 </div>
-            
                 <button type="button" onclick="addNavItem()" class="mt-4 flex items-center gap-2 bg-[#014034]/10 text-[#014034] px-4 py-2 rounded-lg font-bold text-sm hover:bg-[#014034] hover:text-white transition-all">
                     + Add New Menu Item
                 </button>
             </div>
-
 
             <div class="bg-white p-8 rounded-2xl border border-gray-100">
                 <label class="text-xs font-bold text-gray-400 uppercase">Footer About Text</label>
@@ -314,7 +314,7 @@ $footer_links = $pdo->query("SELECT * FROM footer_links ORDER BY section_type DE
 </div>
 
 <script>
-// Tab Logic (আগের মতোই থাকবে)
+// Tab Logic
 document.querySelectorAll('#settingsTabs a').forEach(tab => {
     tab.addEventListener('click', (e) => {
         e.preventDefault();
@@ -330,7 +330,7 @@ document.querySelectorAll('#settingsTabs a').forEach(tab => {
     });
 });
 
-// Menu Builder Logic
+// Menu Builder
 function addNavItem(){
     const div = document.createElement('div');
     div.className = 'flex gap-2 items-center bg-gray-50 p-2 rounded-xl border border-gray-200 animate-in fade-in slide-in-from-top-2 duration-300';
@@ -351,11 +351,6 @@ function previewUpload(input, previewId) {
         reader.readAsDataURL(input.files[0]);
     }
 }
-
-// ফাংশন openMediaManager এবং window.updateImageInput এখান থেকে মুছে ফেলা হয়েছে
-// কারণ এখন এগুলো layout_footer.php তে আছে।
 </script>
-
-<?php require_once '../layout_footer.php'; ?>
 
 <?php require_once '../layout_footer.php'; ?>

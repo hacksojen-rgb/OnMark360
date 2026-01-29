@@ -88,6 +88,7 @@ function icon_color($page, $current) {
 
             <?php
             $content = [
+                'site_content.php' => ['layout-template', 'Page Content'],
                 'hero.php' => ['layers','Hero Slider'],
                 'client_logos.php' => ['gem','Client Logos'],
                 'services.php' => ['zap','Services'],
