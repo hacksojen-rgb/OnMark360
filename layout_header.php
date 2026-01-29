@@ -115,7 +115,8 @@ function icon_color($page, $current) {
             $config = [
                 'settings.php' => ['settings','Settings'],
                 'buttons.php' => ['mouse-pointer-2','Buttons & Links'],
-                'sql_tool.php' => ['terminal-square','SQL Console'],
+                'sql_tool.php' => ['terminal-square','Database Manager'],
+                // 'schema_viewer.php' => ['table-properties','Schema Viewer'],
                 'tracking.php' => ['bar-chart-2','Tracking'],
                 'event_rules.php' => ['mouse-pointer-click','Event Manager'],
                 'backup_system.php' => ['database','Backup System'],

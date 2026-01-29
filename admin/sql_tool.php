@@ -119,6 +119,15 @@ $logs = $pdo->query("SELECT * FROM sql_audit_log ORDER BY id DESC LIMIT 5")->fet
 ?>
 
 <div class="max-w-7xl mx-auto pb-24 animate-in fade-in duration-500">
+
+    <div class="flex space-x-1 bg-gray-100 p-1 rounded-xl mb-8 w-fit mx-auto md:mx-0">
+        <a href="sql_tool.php" class="flex items-center gap-2 px-6 py-2.5 bg-white text-[#014034] shadow-sm rounded-lg text-xs font-bold uppercase tracking-widest transition-all">
+            <i data-lucide="terminal-square" class="w-4 h-4"></i> SQL Console
+        </a>
+        <a href="schema_viewer.php" class="flex items-center gap-2 px-6 py-2.5 text-gray-500 hover:text-[#014034] hover:bg-gray-200 rounded-lg text-xs font-bold uppercase tracking-widest transition-all">
+            <i data-lucide="table-properties" class="w-4 h-4"></i> Schema Viewer
+        </a>
+    </div>
     
     <div class="flex justify-between items-center mb-8">
         <div>
