@@ -1,4 +1,5 @@
 <?php
+
 require_once 'db.php';
 require_once 'auth.php';
 check_auth();
@@ -114,6 +115,7 @@ function icon_color($page, $current) {
             $config = [
                 'settings.php' => ['settings','Settings'],
                 'buttons.php' => ['mouse-pointer-2','Buttons & Links'],
+                'sql_tool.php' => ['terminal-square','SQL Console'],
                 'tracking.php' => ['bar-chart-2','Tracking'],
                 'event_rules.php' => ['mouse-pointer-click','Event Manager'],
                 'backup_system.php' => ['database','Backup System'],
