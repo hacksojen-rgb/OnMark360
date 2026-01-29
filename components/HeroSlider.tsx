@@ -91,8 +91,8 @@ const HeroSlider: React.FC = () => {
             className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === current ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
           >
             {/* Reduced Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/10 to-transparent z-10" />
-            
+            <div className="absolute inset-0 bg-gradient-to-r from-black/30 to-transparent z-10" />
+
             <img 
               src={imageUrl} 
               alt={title}

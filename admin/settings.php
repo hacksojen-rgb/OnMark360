@@ -402,24 +402,16 @@ function previewUpload(input, previewId) {
     }
 }
 
-// Initialize Sorting
+// Initialize Sorting (Corrected)
 document.addEventListener('DOMContentLoaded', function() {
     // 1. Navbar Sorting
     var navEl = document.getElementById('nav-container');
     if(navEl) {
         new Sortable(navEl, {
             animation: 150,
-            handle: '.handle-icon', // শুধু আইকন ধরলেই সরবে
+            handle: '.handle-icon', 
             ghostClass: 'bg-blue-50'
         });
-
-    // Menu Sorting
-    var navEl = document.getElementById('nav-container');
-    new Sortable(navEl, {
-        animation: 150,
-        handle: '.cursor-move', // হ্যান্ডেল আইকন ধরে মুভ হবে
-        ghostClass: 'bg-blue-100'
-    });    
     }
 
     // 2. Social Media Sorting

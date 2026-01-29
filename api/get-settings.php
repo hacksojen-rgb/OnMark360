@@ -12,7 +12,7 @@ try {
     $settings['header_nav'] = json_decode($settings['header_nav'], true) ?: [];
     
     // ২. সোশ্যাল লিংক
-    $socials = $pdo->query("SELECT * FROM social_links")->fetchAll();
+    $socials = $pdo->query("SELECT * FROM social_links ORDER BY sort_order ASC")->fetchAll();
     
     // ৩. ফুটার লিংক (গ্রুপ করা)
     $footer_links_raw = $pdo->query("SELECT * FROM footer_links ORDER BY sort_order")->fetchAll();
