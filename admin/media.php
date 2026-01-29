@@ -9,7 +9,7 @@ session_start();
 $auth_path = file_exists(__DIR__ . '/auth.php') ? __DIR__ . '/auth.php' : __DIR__ . '/../auth.php';
 $header_path = file_exists(__DIR__ . '/layout_header.php') ? __DIR__ . '/layout_header.php' : __DIR__ . '/../layout_header.php';
 
-// ৩. Auth লোড
+// ৩. Auth load
 if (file_exists($auth_path)) {
     require_once $auth_path;
 } else {
