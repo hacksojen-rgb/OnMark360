@@ -3,7 +3,9 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // ২. স্মার্ট ফাইল ইনক্লুশন
 $auth_path = file_exists(__DIR__ . '/auth.php') ? __DIR__ . '/auth.php' : __DIR__ . '/../auth.php';
