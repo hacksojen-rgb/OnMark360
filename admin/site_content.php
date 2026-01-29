@@ -63,34 +63,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // === Universal Image Processor ===
     $upload_dir = '../uploads/';
-    function processImg($fileKey, $hiddenKey, $existingVal) {
-        global $upload_dir;
+    // === Universal Image Processor ===
+$upload_dir = '../uploads/';
+
+function processImg($fileKey, $hiddenKey, $existingVal, $urlInputKey = null) {
+    global $upload_dir;
     
-        // 1. New Upload
-        if (isset($_FILES[$fileKey]) && $_FILES[$fileKey]['error'] == 0) {
-            $ext = pathinfo($_FILES[$fileKey]['name'], PATHINFO_EXTENSION);
-            $allowed = ['jpg','jpeg','png','webp'];
-            if (!in_array(strtolower($ext), $allowed)) {
-                return $existingVal;
-            }
-            $fileName = $fileKey . '_' . time() . '.' . $ext;
-            if (move_uploaded_file($_FILES[$fileKey]['tmp_name'], $upload_dir . $fileName)) {
-                return $fileName;
-            }
-        }
-        // 2. Media Library Selection (Fix: returns only filename)
-        if (!empty($_POST[$hiddenKey])) {
-            return basename($_POST[$hiddenKey]);
-        }
-        // 3. Keep Existing
-        return $existingVal;
+    // ১. যদি ইউজার সরাসরি URL দেয়
+    if ($urlInputKey && !empty($_POST[$urlInputKey])) {
+        return $_POST[$urlInputKey];
     }
 
-    // 🟢 Image Processing (Fixed Function Calls)
-    $about_img1 = processImg('about_image1', 'selected_about_image1', $_POST['existing_about_image1']);
-    $about_img2 = processImg('about_image2', 'selected_about_image2', $_POST['existing_about_image2']);
-    $about_page_img = processImg('about_page_image', 'selected_about_page_image', $_POST['existing_about_page_image']);
-    $adv_image_path = processImg('adv_image', 'selected_adv_image', $_POST['existing_adv_image']);
+    // ২. যদি নতুন ফাইল আপলোড করা হয়
+    if (isset($_FILES[$fileKey]) && $_FILES[$fileKey]['error'] == 0) {
+        $ext = pathinfo($_FILES[$fileKey]['name'], PATHINFO_EXTENSION);
+        $allowed = ['jpg','jpeg','png','webp'];
+        
+        if (!in_array(strtolower($ext), $allowed)) {
+            return $existingVal;
+        }
+
+        $fileName = $fileKey . '_' . time() . '.' . $ext;
+        if (move_uploaded_file($_FILES[$fileKey]['tmp_name'], $upload_dir . $fileName)) {
+            return $fileName;
+        }
+    }
+
+    // ৩. মিডিয়া লাইব্রেরি
+    if (!empty($_POST[$hiddenKey])) {
+        return basename($_POST[$hiddenKey]);
+    }
+
+    // ৪. আগের ভ্যালু
+    return $existingVal;
+}
+
+// 🟢 Image Processing (Updated Calls)
+$about_img1 = processImg('about_image1', 'selected_about_image1', $_POST['existing_about_image1'], 'about_image1_url');
+$about_img2 = processImg('about_image2', 'selected_about_image2', $_POST['existing_about_image2'], 'about_image2_url');
+$about_page_img = processImg('about_page_image', 'selected_about_page_image', $_POST['existing_about_page_image']);
+$adv_image_path = processImg('adv_image', 'selected_adv_image', $_POST['existing_adv_image']);
 
     // ডাটাবেজ আপডেট
     $stmt = $pdo->prepare("UPDATE site_settings SET 
@@ -345,6 +357,7 @@ if(empty($adv_features)) {
                             <button type="button" onclick="openMediaManager('selected_about_image1', 'prev_ab1')" class="bg-gray-100 px-3 py-1 rounded text-xs font-bold">Media</button>
                             <input type="file" name="about_image1" class="text-xs">
                         </div>
+                        <input type="text" name="about_image1_url" placeholder="OR Paste Image URL here..." class="w-full p-2 mt-2 bg-white border rounded text-xs" value="<?php echo (filter_var($settings['home_about_image1'], FILTER_VALIDATE_URL)) ? $settings['home_about_image1'] : ''; ?>">
                     </div>
 
                     <div>
@@ -358,6 +371,7 @@ if(empty($adv_features)) {
                             <button type="button" onclick="openMediaManager('selected_about_image2', 'prev_ab2')" class="bg-gray-100 px-3 py-1 rounded text-xs font-bold">Media</button>
                             <input type="file" name="about_image2" class="text-xs">
                         </div>
+                        <input type="text" name="about_image2_url" placeholder="OR Paste Image URL here..." class="w-full p-2 mt-2 bg-white border rounded text-xs" value="<?php echo (isset($settings['home_about_image2']) && filter_var($settings['home_about_image2'], FILTER_VALIDATE_URL)) ? $settings['home_about_image2'] : ''; ?>">
                     </div>
                 </div>
             </div>

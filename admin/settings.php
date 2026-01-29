@@ -1,41 +1,50 @@
 <?php
-ob_start(); 
+ob_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+
 require_once '../db.php';
 require_once '../layout_header.php';
 
-// ডাটা রিমুভ হ্যান্ডলার
+// === অটোমেটিক ডাটাবেজ ফিক্স (Sort Order কলাম না থাকলে যুক্ত করবে) ===
+try {
+    try {
+    $pdo->query("SELECT sort_order FROM social_links LIMIT 1");
+} catch(Exception $e) {
+    $pdo->exec("ALTER TABLE social_links ADD sort_order INT DEFAULT 0");
+}
+
+} catch (Exception $e) { /* Ignore if exists */ }
+
+// === ডাটা রিমুভ হ্যান্ডলার ===
 if (isset($_GET['delete_social'])) {
     $pdo->prepare("DELETE FROM social_links WHERE id = ?")->execute([$_GET['delete_social']]);
-    header('Location: settings.php#social'); exit();
+    header('Location: settings.php#social');
+    exit();
 }
 if (isset($_GET['delete_link'])) {
     $pdo->prepare("DELETE FROM footer_links WHERE id = ?")->execute([$_GET['delete_link']]);
-    header('Location: settings.php#footer'); exit();
+    header('Location: settings.php#footer');
+    exit();
 }
 
-// সেটিংস সেভ হ্যান্ডলার
+// === সেটিংস সেভ হ্যান্ডলার ===
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf_token($_POST['csrf_token'] ?? '');
-    
-    // ১. মেইন সেটিংস
+
+    // ১. মেইন সেটিংস আপডেট
     if (isset($_POST['action']) && $_POST['action'] == 'main_settings') {
-        
         $upload_dir = '../uploads/';
         
         function getImagePath($fileKey, $hiddenKey, $existingVal) {
             global $upload_dir;
-            // নতুন আপলোড হলে
             if (isset($_FILES[$fileKey]) && $_FILES[$fileKey]['error'] === 0) {
                 $ext = pathinfo($_FILES[$fileKey]['name'], PATHINFO_EXTENSION);
                 $newName = 'brand_' . time() . rand(10,99) . '.' . $ext;
                 move_uploaded_file($_FILES[$fileKey]['tmp_name'], $upload_dir . $newName);
                 return $newName;
-            } 
-            // মিডিয়া থেকে সিলেক্ট করলে (শুধু ফাইলের নাম নেব)
-            elseif (!empty($_POST[$hiddenKey])) {
-                return basename($_POST[$hiddenKey]); // 🔥 ফিক্স: পাথ বাদ দিয়ে শুধু নাম
+            } elseif (!empty($_POST[$hiddenKey])) {
+                return basename($_POST[$hiddenKey]);
             }
             return $existingVal;
         }
@@ -48,13 +57,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $about_text = $_POST['about_text'] ?? '';
         $show_footer_links = isset($_POST['show_footer_links']) ? 1 : 0;
 
+        // মেনু আইটেম প্রসেসিং
         $nav_items = [];
         if(isset($_POST['nav_label'])){
             for($i=0; $i<count($_POST['nav_label']); $i++){
                 if(!empty($_POST['nav_label'][$i])){
                     $nav_items[] = [
                         'label' => $_POST['nav_label'][$i],
-                        'path'  => $_POST['nav_path'][$i]
+                        'path' => $_POST['nav_path'][$i]
                     ];
                 }
             }
@@ -62,53 +72,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $header_nav_json = json_encode($nav_items);
 
         try {
-            $stmt = $pdo->prepare("UPDATE site_settings SET 
-                company_name = ?, address = ?, phone = ?, email = ?,
-                logo_url = ?, footer_logo_url = ?, site_favicon = ?,
-                theme_color = ?, header_nav = ?, show_footer_links = ?, about_text = ?
-                WHERE id = 1");
-
+            $stmt = $pdo->prepare("UPDATE site_settings SET company_name = ?, address = ?, phone = ?, email = ?, logo_url = ?, footer_logo_url = ?, site_favicon = ?, theme_color = ?, header_nav = ?, show_footer_links = ?, about_text = ? WHERE id = 1");
             $stmt->execute([
-                $_POST['company_name'], $_POST['address'], $_POST['phone'], $_POST['email'],
-                $logo, $footer_logo, $favicon,
-                $theme_color, $header_nav_json, $show_footer_links, $about_text
+                $_POST['company_name'], $_POST['address'], $_POST['phone'], $_POST['email'], 
+                $logo, $footer_logo, $favicon, $theme_color, $header_nav_json, $show_footer_links, $about_text
             ]);
-
-            header('Location: settings.php?success=1'); exit();
+            header('Location: settings.php?success=1');
+            exit();
         } catch (PDOException $e) {
             die("Database Error: " . $e->getMessage());
         }
     }
 
-    // ২. ফুটার স্ট্যাটাস আপডেট
+    // ২. সোশ্যাল মিডিয়া অর্ডার আপডেট (NEW)
+    if (isset($_POST['action']) && $_POST['action'] == 'update_social_order') {
+        if(isset($_POST['social_id'])) {
+            foreach ($_POST['social_id'] as $index => $id) {
+                $stmt = $pdo->prepare("UPDATE social_links SET sort_order = ? WHERE id = ?");
+                $stmt->execute([$index, $id]);
+            }
+        }
+        header('Location: settings.php#social');
+        exit();
+    }
+
+    // ৩. ফুটার স্ট্যাটাস আপডেট
     if (isset($_POST['action']) && $_POST['action'] == 'update_footer_status') {
         $status = isset($_POST['show_footer_links']) ? 1 : 0;
         $pdo->prepare("UPDATE site_settings SET show_footer_links = ? WHERE id = 1")->execute([$status]);
-        header('Location: settings.php?success=1#footer'); exit();
+        header('Location: settings.php?success=1#footer');
+        exit();
     }
 
-    // ৩. সোশ্যাল মিডিয়া অ্যাড
+    // ৪. সোশ্যাল মিডিয়া অ্যাড
     if (isset($_POST['action']) && $_POST['action'] == 'add_social') {
-        $stmt = $pdo->prepare("INSERT INTO social_links (platform, icon_code, url) VALUES (?, ?, ?)");
+        $stmt = $pdo->prepare("INSERT INTO social_links (platform, icon_code, url, sort_order) VALUES (?, ?, ?, 99)");
         $stmt->execute([$_POST['platform'], $_POST['icon'], $_POST['url']]);
-        header('Location: settings.php#social'); exit();
+        header('Location: settings.php#social');
+        exit();
     }
 
-    // ৪. ফুটার লিংক অ্যাড
+    // ৫. ফুটার লিংক অ্যাড
     if (isset($_POST['action']) && $_POST['action'] == 'add_footer_link') {
         $stmt = $pdo->prepare("INSERT INTO footer_links (section_type, label, url) VALUES (?, ?, ?)");
         $stmt->execute([$_POST['section_type'], $_POST['label'], $_POST['url']]);
-        header('Location: settings.php#footer'); exit();
+        header('Location: settings.php#footer');
+        exit();
     }
 }
 
 // ডাটা লোড
 $settings = $pdo->query("SELECT * FROM site_settings WHERE id = 1")->fetch();
-$socials = $pdo->query("SELECT * FROM social_links")->fetchAll();
+$socials = $pdo->query("SELECT * FROM social_links ORDER BY sort_order ASC")->fetchAll(); // অর্ডার অনুযায়ী ফেচ
 $footer_links = $pdo->query("SELECT * FROM footer_links ORDER BY section_type DESC")->fetchAll();
 ?>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+
 <div class="max-w-6xl mx-auto pb-24">
+    
     <div class="flex justify-between items-center mb-8">
         <h1 class="text-3xl font-black text-[#014034] uppercase">Site Settings</h1>
         <?php if(isset($_GET['success'])): ?>
@@ -126,7 +148,7 @@ $footer_links = $pdo->query("SELECT * FROM footer_links ORDER BY section_type DE
         <form method="POST" enctype="multipart/form-data" class="space-y-8">
             <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
             <input type="hidden" name="action" value="main_settings">
-            
+
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div class="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm">
                     <h3 class="text-lg font-black text-[#014034] mb-6 uppercase">Company Info</h3>
@@ -207,21 +229,23 @@ $footer_links = $pdo->query("SELECT * FROM footer_links ORDER BY section_type DE
             </div>
 
             <div class="bg-white p-8 rounded-2xl border border-gray-100">
-                <h3 class="font-black uppercase mb-4 text-[#014034]">Header Menu Builder</h3>
+                <h3 class="font-black uppercase mb-4 text-[#014034]">Header Menu Builder (Drag to Sort)</h3>
+                
                 <div id="nav-container" class="space-y-3">
-                    <?php
+                    <?php 
                     $navs = json_decode($settings['header_nav'] ?? '[]', true);
                     if (!is_array($navs)) $navs = [];
-                    foreach($navs as $index => $nav):
+                    foreach($navs as $index => $nav): 
                     ?>
-                    <div class="flex gap-2 items-center bg-gray-50 p-2 rounded-xl border border-gray-200">
-                        <span class="text-gray-400 font-bold px-2">☰</span>
+                    <div class="flex gap-2 items-center bg-gray-50 p-2 rounded-xl border border-gray-200 cursor-move">
+                        <span class="text-gray-400 font-bold px-2 handle-icon">☰</span>
                         <input type="text" name="nav_label[]" value="<?php echo htmlspecialchars($nav['label'] ?? ''); ?>" class="w-1/3 p-2 bg-white rounded-lg font-bold border-none outline-none focus:ring-2 focus:ring-primary/20" placeholder="Label">
                         <input type="text" name="nav_path[]" value="<?php echo htmlspecialchars($nav['path'] ?? ''); ?>" class="w-1/2 p-2 bg-white rounded-lg border-none outline-none focus:ring-2 focus:ring-primary/20 text-blue-600 font-mono text-sm" placeholder="URL Path">
                         <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors">✕</button>
                     </div>
                     <?php endforeach; ?>
                 </div>
+                
                 <button type="button" onclick="addNavItem()" class="mt-4 flex items-center gap-2 bg-[#014034]/10 text-[#014034] px-4 py-2 rounded-lg font-bold text-sm hover:bg-[#014034] hover:text-white transition-all">
                     + Add New Menu Item
                 </button>
@@ -237,19 +261,39 @@ $footer_links = $pdo->query("SELECT * FROM footer_links ORDER BY section_type DE
     </div>
 
     <div id="social" class="tab-content hidden">
-         <div class="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm">
-            <h3 class="text-lg font-black text-[#014034] mb-6 uppercase">Social Accounts</h3>
-            <div class="space-y-3 mb-8">
-                <?php foreach($socials as $social): ?>
-                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                    <span class="font-bold"><?php echo htmlspecialchars($social['platform']); ?></span>
-                    <a href="?delete_social=<?php echo $social['id']; ?>" class="text-red-500 font-bold" onclick="return confirm('Delete?')">Delete</a>
+        <div class="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm">
+            <h3 class="text-lg font-black text-[#014034] mb-6 uppercase">Social Accounts (Drag to Reorder)</h3>
+            
+            <form method="POST" id="socialSortForm">
+                <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
+                <input type="hidden" name="action" value="update_social_order">
+                
+                <div id="social-container" class="space-y-3 mb-8">
+                    <?php foreach($socials as $social): ?>
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl cursor-move border border-transparent hover:border-gray-200">
+                        <div class="flex items-center gap-4 flex-1">
+                            <span class="text-gray-400 font-bold handle-social">☰</span>
+                            <input type="hidden" name="social_id[]" value="<?php echo $social['id']; ?>">
+                            
+                            <i data-lucide="<?php echo htmlspecialchars($social['icon_code']); ?>" class="w-5 h-5 text-gray-500"></i>
+                            <div class="flex flex-col">
+                                <span class="font-bold"><?php echo htmlspecialchars($social['platform']); ?></span>
+                                <span class="text-xs text-gray-400 truncate max-w-[200px]"><?php echo htmlspecialchars($social['url']); ?></span>
+                            </div>
+                        </div>
+                        <a href="?delete_social=<?php echo $social['id']; ?>" class="text-red-500 font-bold px-3 py-1 bg-red-50 rounded-lg" onclick="return confirm('Delete?')">Delete</a>
+                    </div>
+                    <?php endforeach; ?>
                 </div>
-                <?php endforeach; ?>
-            </div>
-            <form method="POST" class="bg-gray-50 p-6 rounded-2xl">
+                
+                <button type="submit" class="bg-[#014034] text-white px-6 py-2 rounded-lg font-bold text-sm mb-8">Save New Order</button>
+            </form>
+
+            <form method="POST" class="bg-gray-50 p-6 rounded-2xl border-t border-gray-200">
+                <h4 class="font-bold text-sm text-gray-500 uppercase mb-4">Add New Social Link</h4>
                 <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                 <input type="hidden" name="action" value="add_social">
+                
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <input type="text" name="platform" placeholder="Platform (e.g. Facebook)" required class="p-3 rounded-xl border font-bold">
                     <input type="text" name="icon" placeholder="Lucide Icon (e.g. Facebook)" required class="p-3 rounded-xl border font-bold">
@@ -257,14 +301,15 @@ $footer_links = $pdo->query("SELECT * FROM footer_links ORDER BY section_type DE
                     <button type="submit" class="bg-[#014034] text-white p-3 rounded-xl font-bold uppercase">Add Social</button>
                 </div>
             </form>
-         </div>
+        </div>
     </div>
 
     <div id="footer" class="tab-content hidden">
-         <div class="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm">
+        <div class="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm">
             <form method="POST">
                 <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                 <input type="hidden" name="action" value="update_footer_status">
+                
                 <h3 class="text-lg font-black text-[#014034] mb-6 uppercase">Footer Visibility</h3>
                 <label class="flex items-center gap-3 cursor-pointer mb-6">
                     <input type="checkbox" name="show_footer_links" value="1" <?php if(($settings['show_footer_links'] ?? 1) == 1) echo 'checked'; ?>>
@@ -272,9 +317,9 @@ $footer_links = $pdo->query("SELECT * FROM footer_links ORDER BY section_type DE
                 </label>
                 <button type="submit" class="bg-[#014034] text-white px-6 py-2 rounded-lg font-bold">Save Link Status</button>
             </form>
-         </div>
+        </div>
 
-         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
             <div class="space-y-6">
                 <?php foreach(['explore' => 'Explore', 'support' => 'Support'] as $key => $label): ?>
                 <div class="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
@@ -282,10 +327,10 @@ $footer_links = $pdo->query("SELECT * FROM footer_links ORDER BY section_type DE
                     <div class="space-y-2">
                         <?php foreach($footer_links as $link): ?>
                             <?php if($link['section_type'] === $key): ?>
-                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
-                                    <span class="font-bold text-sm"><?php echo htmlspecialchars($link['label']); ?></span>
-                                    <a href="?delete_link=<?php echo $link['id']; ?>" class="text-red-500 text-sm font-bold">✕</a>
-                                </div>
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
+                                <span class="font-bold text-sm"><?php echo htmlspecialchars($link['label']); ?></span>
+                                <a href="?delete_link=<?php echo $link['id']; ?>" class="text-red-500 text-sm font-bold">✕</a>
+                            </div>
                             <?php endif; ?>
                         <?php endforeach; ?>
                     </div>
@@ -297,6 +342,7 @@ $footer_links = $pdo->query("SELECT * FROM footer_links ORDER BY section_type DE
                 <form method="POST">
                     <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                     <input type="hidden" name="action" value="add_footer_link">
+                    
                     <h3 class="text-lg font-black text-[#014034] mb-6 uppercase">Add New Footer Link</h3>
                     <div class="space-y-4">
                         <div class="flex gap-4">
@@ -309,8 +355,9 @@ $footer_links = $pdo->query("SELECT * FROM footer_links ORDER BY section_type DE
                     </div>
                 </form>
             </div>
-         </div>
+        </div>
     </div>
+
 </div>
 
 <script>
@@ -321,6 +368,7 @@ document.querySelectorAll('#settingsTabs a').forEach(tab => {
         const target = tab.getAttribute('href').substring(1);
         document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
         document.getElementById(target).classList.remove('hidden');
+        
         document.querySelectorAll('#settingsTabs a').forEach(t => {
             t.classList.remove('border-[#014034]', 'text-[#014034]');
             t.classList.add('border-transparent', 'text-gray-400');
@@ -330,12 +378,12 @@ document.querySelectorAll('#settingsTabs a').forEach(tab => {
     });
 });
 
-// Menu Builder
+// Menu Builder Add Item
 function addNavItem(){
     const div = document.createElement('div');
-    div.className = 'flex gap-2 items-center bg-gray-50 p-2 rounded-xl border border-gray-200 animate-in fade-in slide-in-from-top-2 duration-300';
+    div.className = 'flex gap-2 items-center bg-gray-50 p-2 rounded-xl border border-gray-200 animate-in fade-in slide-in-from-top-2 duration-300 cursor-move';
     div.innerHTML = `
-        <span class="text-gray-400 font-bold px-2">☰</span>
+        <span class="text-gray-400 font-bold px-2 handle-icon">☰</span>
         <input type="text" name="nav_label[]" class="w-1/3 p-2 bg-white rounded-lg font-bold border-none outline-none focus:ring-2 focus:ring-primary/20" placeholder="Label">
         <input type="text" name="nav_path[]" class="w-1/2 p-2 bg-white rounded-lg border-none outline-none focus:ring-2 focus:ring-primary/20 text-blue-600 font-mono text-sm" placeholder="URL Path">
         <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors">✕</button>
@@ -347,10 +395,43 @@ function addNavItem(){
 function previewUpload(input, previewId) {
     if (input.files && input.files[0]) {
         var reader = new FileReader();
-        reader.onload = function(e) { document.getElementById(previewId).src = e.target.result; }
+        reader.onload = function(e) {
+            document.getElementById(previewId).src = e.target.result;
+        }
         reader.readAsDataURL(input.files[0]);
     }
 }
+
+// Initialize Sorting
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Navbar Sorting
+    var navEl = document.getElementById('nav-container');
+    if(navEl) {
+        new Sortable(navEl, {
+            animation: 150,
+            handle: '.handle-icon', // শুধু আইকন ধরলেই সরবে
+            ghostClass: 'bg-blue-50'
+        });
+
+    // Menu Sorting
+    var navEl = document.getElementById('nav-container');
+    new Sortable(navEl, {
+        animation: 150,
+        handle: '.cursor-move', // হ্যান্ডেল আইকন ধরে মুভ হবে
+        ghostClass: 'bg-blue-100'
+    });    
+    }
+
+    // 2. Social Media Sorting
+    var socialEl = document.getElementById('social-container');
+    if(socialEl) {
+        new Sortable(socialEl, {
+            animation: 150,
+            handle: '.handle-social',
+            ghostClass: 'bg-blue-50'
+        });
+    }
+});
 </script>
 
 <?php require_once '../layout_footer.php'; ?>
