@@ -3,8 +3,21 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+session_start();
+
+// ২. স্মার্ট ফাইল ইনক্লুশন
+$auth_path = file_exists(__DIR__ . '/auth.php') ? __DIR__ . '/auth.php' : __DIR__ . '/../auth.php';
+$header_path = file_exists(__DIR__ . '/layout_header.php') ? __DIR__ . '/layout_header.php' : __DIR__ . '/../layout_header.php';
+
+// ৩. Auth লোড
+if (file_exists($auth_path)) {
+    require_once $auth_path;
+} else {
+    die("<div style='color:red;padding:20px;'>auth.php পাওয়া যায়নি</div>");
+}
+
+if (!function_exists('generate_csrf_token')) {
+    die("<div style='color:red;padding:20px;'>CSRF function missing</div>");
 }
 
 // ২. স্মার্ট ফাইল ইনক্লুশন
