@@ -1,25 +1,30 @@
 <?php
-// টাইম এবং মেমোরি লিমিট বাড়ানো (বড় ব্যাকআপের জন্য)
-set_time_limit(300);
-ini_set('memory_limit', '512M');
+// টাইম এবং মেমোরি লিমিট বাড়ানো (বড় ব্যাকআপের জন্য)
+set_time_limit(600); // 10 minutes
+ini_set('memory_limit', '1024M'); // 1GB Memory
 
 // ১. এনভায়রনমেন্ট চেক এবং সেটআপ
 $is_cli = (php_sapi_name() === 'cli');
 
 if (!$is_cli) {
     require_once '../auth.php';
-    check_auth();
     require_once '../layout_header.php';
+    // auth.php তে check_auth() কল করা থাকলে এখানে আর লাগবে না, 
+    // তবে নিশ্চিত হওয়ার জন্য রাখা ভালো।
+    if(function_exists('check_auth')) check_auth(); 
 } else {
     require_once __DIR__ . '/../db.php';
 }
-
-// ২. ENV Loader (যদি থাকে)
+// ==================================================
+// ENV Loader (if .env exists)
+// ==================================================
 $envPath = realpath(__DIR__ . '/../.env');
 if ($envPath && file_exists($envPath)) {
     $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
         if (strpos(trim($line), '#') === 0) continue;
+        if (!str_contains($line, '=')) continue;
+
         [$key, $value] = array_map('trim', explode('=', $line, 2));
         if (!getenv($key)) {
             putenv("$key=$value");
@@ -28,7 +33,8 @@ if ($envPath && file_exists($envPath)) {
     }
 }
 
-// ৩. ভেরিয়েবল এবং ফোল্ডার সেটআপ
+
+// ২. ভেরিয়েবল এবং ফোল্ডার সেটআপ
 $backupDir = __DIR__ . '/../backups/';
 if (!file_exists($backupDir)) {
     mkdir($backupDir, 0755, true);
@@ -48,7 +54,7 @@ function cli_log($message) {
 }
 
 // ==================================================
-// ৪. PHP Native Database Dump Function (No mysqldump required)
+// ৩. PHP Native Database Dump Function
 // ==================================================
 function dumpDatabase($pdo, $outputFile) {
     try {
@@ -69,7 +75,7 @@ function dumpDatabase($pdo, $outputFile) {
         }
 
         foreach ($tables as $table) {
-            // টেবিল ড্রপ এবং ক্রিয়েট স্ট্রাকচার
+            // টেবিল স্ট্রাকচার
             fwrite($handle, "-- Table structure for table `$table`\n");
             fwrite($handle, "DROP TABLE IF EXISTS `$table`;\n");
             
@@ -78,12 +84,14 @@ function dumpDatabase($pdo, $outputFile) {
 
             // ডাটা ডাম্প
             fwrite($handle, "-- Dumping data for table `$table`\n");
+            // Large table safe mode
+            $pdo->query("SET SESSION sql_big_selects=1");
+
             $rows = $pdo->query("SELECT * FROM `$table`");
             
             while ($row = $rows->fetch(PDO::FETCH_ASSOC)) {
                 $values = array_map(function($value) use ($pdo) {
                     if ($value === null) return "NULL";
-                    // PDO::quote ব্যবহার করে সেফ করা
                     return $pdo->quote($value);
                 }, array_values($row));
                 
@@ -95,31 +103,37 @@ function dumpDatabase($pdo, $outputFile) {
         fclose($handle);
         return true;
     } catch (Exception $e) {
-        return false;
-    }
+    cli_log("Dump error: " . $e->getMessage());
+    return false;
+}
 }
 
 // ==================================================
-// ৫. মেইন ব্যাকআপ লজিক
+// ৪. মেইন ব্যাকআপ লজিক
 // ==================================================
 if ($is_cli || ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['trigger_backup']))) {
 
+    // 🔥 সিকিউরিটি চেক: CSRF টোকেন ভেরিফিকেশন (শুধু ব্রাউজারের জন্য)
+    if (!$is_cli) {
+        verify_csrf_token($_POST['csrf_token'] ?? '');
+    }
+
     cli_log("Backup process started.");
 
-    // ক. ডাটাবেজ ডাম্প (PHP দিয়ে)
-    // $pdo অবজেক্টটি db.php বা layout_header.php থেকে আসছে
-    if (isset($pdo)) {
-        $dbSuccess = dumpDatabase($pdo, $sqlFile);
-        if ($dbSuccess) {
-            cli_log("Database dump successful (PHP Mode).");
-        } else {
-            cli_log("Database dump failed.");
-            file_put_contents($sqlFile, "Error: Could not dump database via PHP.");
-        }
+    // ক. ডাটাবেজ ডাম্প
+if (isset($pdo)) {
+    $dbSuccess = dumpDatabase($pdo, $sqlFile);
+    if ($dbSuccess) {
+        cli_log("Database dump successful.");
     } else {
-        cli_log("PDO connection not found.");
-        file_put_contents($sqlFile, "Error: Database connection not active.");
+        cli_log("Database dump failed.");
+        file_put_contents($sqlFile, "Error: Could not dump database via PHP.");
     }
+} else {
+    cli_log("PDO connection not found.");
+    file_put_contents($sqlFile, "Error: PDO not available.");
+}
+
 
     // খ. ZIP তৈরি
     $rootPath = realpath(__DIR__ . '/../');
@@ -138,11 +152,12 @@ if ($is_cli || ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['trigger_b
                 $filePath = $file->getRealPath();
                 $relativePath = substr($filePath, strlen($rootPath) + 1);
 
-                // অনাকাঙ্ক্ষিত ফোল্ডার বাদ দেওয়া
+                // অনাকাঙ্ক্ষিত ফোল্ডার বাদ দেওয়া
                 if (
                     strpos($relativePath, 'backups/') !== 0 &&
                     strpos($relativePath, 'error_log') === false &&
-                    strpos($relativePath, '.git') === false
+                    strpos($relativePath, '.git') === false &&
+                    strpos($relativePath, 'node_modules') === false // node_modules বাদ দেওয়া ভালো (অনেক ভারী হয়)
                 ) {
                     $zip->addFile($filePath, $relativePath);
                 }
@@ -152,13 +167,17 @@ if ($is_cli || ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['trigger_b
         // ২. SQL ফাইলটি জিপের ভেতর যোগ করা
         if (file_exists($sqlFile)) {
             $zip->addFile($sqlFile, $sqlFileName);
-        } else {
-            $zip->addFromString("database_missing.txt", "SQL file was not generated.");
-        }
+        } 
+        else {
+    $zip->addFromString(
+        "database_missing.txt",
+        "SQL dump file was not generated. Check backup logs."
+    );
+}
 
         $zip->close();
 
-        // ৩. বাইরের SQL ফাইল ডিলিট (ক্লিনআপ)
+        // ৩. ক্লিনআপ: SQL ফাইল ডিলিট
         if (file_exists($sqlFile)) {
             unlink($sqlFile);
         }
@@ -169,62 +188,78 @@ if ($is_cli || ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['trigger_b
         cli_log("Failed to create ZIP archive.");
     }
 
-    // গ. অটোমেটিক ক্লিনআপ (৭ দিনের পুরনো ডিলিট)
+    // গ. অটোমেটিক ক্লিনআপ (পুরনো ফাইল ডিলিট)
     $now = time();
     foreach (glob($backupDir . "*.zip") as $file) {
-        if ($now - filemtime($file) >= 60 * 60 * 24 * 7) {
+        if ($now - filemtime($file) >= 60 * 60 * 24 * 7) { // ৭ দিন
             unlink($file);
-            cli_log("Old backup removed: " . basename($file));
         }
     }
-
-    cli_log("Backup process finished.");
 }
 
 // ==================================================
-// ৬. UI (Browser only)
+// ৫. UI (Browser only)
 // ==================================================
 if (!$is_cli) {
 ?>
 
-<div class="max-w-4xl mx-auto mt-10 p-10 bg-white rounded-[3rem] shadow-sm border border-gray-100 text-center animate-in fade-in duration-500">
-
-<?php if ($backupCreated): ?>
-    <div class="inline-flex p-5 bg-green-100 text-green-600 rounded-full mb-6">
-        <i data-lucide="check-circle" class="w-16 h-16"></i>
-    </div>
-    <h1 class="text-4xl font-black text-[#014034] mb-3 uppercase tracking-tight">Backup Ready!</h1>
-    <p class="text-gray-500 mb-10 font-medium">Full site and database backup generated successfully.</p>
-
-    <div class="flex justify-center gap-4">
-        <a href="../backups/<?php echo basename($zipFile); ?>" class="bg-[#014034] text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest hover:scale-105 transition-transform shadow-xl inline-flex items-center gap-3">
-            <i data-lucide="download"></i> Download Backup
-        </a>
-        <a href="backup_system.php" class="bg-gray-100 text-gray-500 px-10 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-gray-200 transition-colors">
-            Back
-        </a>
-    </div>
-<?php else: ?>
-    <div class="inline-flex p-5 bg-[#014034]/10 text-[#014034] rounded-full mb-6">
-        <i data-lucide="database" class="w-16 h-16"></i>
-    </div>
-    <h1 class="text-4xl font-black text-[#014034] mb-3 uppercase tracking-tight">System Backup</h1>
-    <p class="text-gray-500 mb-10 font-medium max-w-lg mx-auto">
-        Create a complete archive of your website files and database. 
-        <br><span class="text-xs text-orange-500 font-bold">(Using PHP Native Dumper - Safe for Special Characters)</span>
-    </p>
-
-    <form method="POST">
-        <input type="hidden" name="trigger_backup" value="1">
-        <button type="submit" class="bg-[#014034] text-white px-12 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-[#00332a] hover:shadow-2xl transition-all inline-flex items-center gap-3 cursor-pointer">
-            <i data-lucide="save"></i> Take Backup Now
-        </button>
-    </form>
+<div class="max-w-4xl mx-auto pb-24 animate-in fade-in duration-500">
     
-    <p class="mt-8 text-xs text-gray-400 font-bold uppercase tracking-widest">
-        * Older backups (7+ days) are automatically removed.
-    </p>
-<?php endif; ?>
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-black text-[#014034] uppercase flex items-center gap-3">
+                <i data-lucide="database-backup" class="w-8 h-8"></i> Backup System
+            </h1>
+            <p class="text-gray-500 text-xs font-bold uppercase tracking-widest mt-1">
+                Full Site & Database Archive
+            </p>
+        </div>
+    </div>
+
+    <?php if ($backupCreated): ?>
+        <div class="bg-white p-8 rounded-[2rem] border border-green-100 shadow-xl text-center">
+            <div class="inline-flex p-5 bg-green-100 text-green-600 rounded-full mb-6">
+                <i data-lucide="check-circle" class="w-16 h-16"></i>
+            </div>
+            <h1 class="text-3xl font-black text-[#014034] mb-3 uppercase">Backup Ready!</h1>
+            <p class="text-gray-500 mb-8 font-medium">Full backup generated successfully at <?php echo date('H:i:s'); ?></p>
+
+            <div class="flex justify-center gap-4">
+                <a href="../backups/<?php echo basename($zipFile); ?>" class="bg-[#014034] text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest hover:scale-105 transition-transform shadow-lg flex items-center gap-3">
+                    <i data-lucide="download" class="w-5 h-5"></i> Download ZIP
+                </a>
+                <a href="backup_system.php" class="bg-gray-100 text-gray-500 px-10 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-gray-200 transition-colors">
+                    Back
+                </a>
+            </div>
+        </div>
+    <?php else: ?>
+        <div class="bg-white p-10 rounded-[2rem] border border-gray-100 shadow-xl text-center">
+            <div class="inline-flex p-6 bg-green-50 rounded-full mb-6">
+                <i data-lucide="server" class="w-12 h-12 text-[#014034]"></i>
+            </div>
+            
+            <h2 class="text-2xl font-black text-[#014034] mb-4">Generate Full Backup</h2>
+            <p class="text-gray-500 text-sm mb-8 max-w-lg mx-auto leading-relaxed">
+                This process will create a <b>ZIP archive</b> containing:
+                <br>✅ All Website Files (Images, PHP, CSS, JS)
+                <br>✅ Full Database Dump (.sql)
+            </p>
+
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
+                <input type="hidden" name="trigger_backup" value="1">
+                
+                <button type="submit" onclick="this.innerHTML='Processing...'; this.disabled=true; this.form.submit();" class="bg-[#014034] text-white px-12 py-5 rounded-2xl font-black uppercase tracking-widest hover:shadow-2xl hover:scale-105 transition-all flex items-center gap-3 mx-auto cursor-pointer">
+                    <i data-lucide="save" class="w-5 h-5"></i> Start Backup Process
+                </button>
+            </form>
+            
+            <p class="mt-8 text-[10px] text-gray-400 font-bold uppercase tracking-widest bg-gray-50 inline-block px-4 py-2 rounded-lg">
+                <i data-lucide="clock" class="w-3 h-3 inline mr-1"></i> Auto-cleanup: Backups older than 7 days are deleted.
+            </p>
+        </div>
+    <?php endif; ?>
 
 </div>
 
