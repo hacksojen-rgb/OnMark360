@@ -1,11 +1,15 @@
-RewriteEngine On
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
 
-# API রিকোয়েস্টগুলোকে api ফোল্ডারে পাঠিয়ে দেওয়া
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^api/(.*)$ api/$1.php [L,QSA]
+  # ১. যদি admin, api বা backups ফোল্ডার হয়, তবে সেখানে ঢুকতে দাও (React এ পাঠাবে না)
+  RewriteRule ^(admin|api|backups)($|/) - [L]
 
-# React ফ্রন্টএন্ডের জন্য রাউটিং
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule . /index.html [L]
+  # ২. যদি রিকোয়েস্ট করা ফাইল বা ফোল্ডার বাস্তবে থাকে, তবে সেটাই দেখাও
+  RewriteCond %{REQUEST_FILENAME} -f
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # ৩. বাকি সব রিকোয়েস্ট index.html এ পাঠিয়ে দাও (React Router হ্যান্ডেল করবে)
+  RewriteRule ^ index.html [L]
+</IfModule>
